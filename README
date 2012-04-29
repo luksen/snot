@@ -1,0 +1,8 @@
+snot - simple notification
+
+Text based notification server for libnotify. 
+
+WIP!
+
+notes:
+ - read dbus spec on marshalled form
