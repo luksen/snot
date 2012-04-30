@@ -71,9 +71,6 @@ DBusMessage*
 snot_get_server_information(DBusMessage *msg) {
     DBusMessage *reply;
     DBusMessageIter args;
-    char *param;
-
-    printf("info\n");
 
     // compose reply
     reply = dbus_message_new_method_return(msg);
@@ -97,7 +94,6 @@ snot_get_server_information(DBusMessage *msg) {
         fprintf(stderr, "Out Of Memory!\n"); 
         exit(1);
     }
-    printf("info\n");
 
     return reply;
 }
