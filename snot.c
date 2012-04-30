@@ -1,10 +1,18 @@
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <dbus/dbus.h>
 
 
-DBusHandlerResult snot_handler(DBusConnection* conn, 
-        DBusMessage* msg, void *user_data);
+const char *snot_name = "Snot";
+const char *snot_vendor = "sleunk";
+const char *snot_version = "0.01";
+const char *snot_spec_version = "1.2";
+
+
+DBusHandlerResult snot_handler(DBusConnection *conn, 
+        DBusMessage *msg, void *user_data);
+DBusMessage* snot_get_server_information(DBusMessage *msg);
 
 
 int main(int args, int **argv) {
@@ -50,6 +58,47 @@ int main(int args, int **argv) {
 
 DBusHandlerResult 
 snot_handler(DBusConnection *conn, DBusMessage *msg, void *user_data ) {
-    printf(dbus_message_get_member(msg));
+    const char *member = dbus_message_get_member(msg);
+    printf("%s\n", member);
+    if (strcmp(member, "GetServerInformation") == 0) {
+        dbus_connection_send(conn, snot_get_server_information(msg), NULL);
+    }
     return DBUS_HANDLER_RESULT_HANDLED;
 }
+
+
+DBusMessage* 
+snot_get_server_information(DBusMessage *msg) {
+    DBusMessage *reply;
+    DBusMessageIter args;
+    char *param;
+
+    printf("info\n");
+
+    // compose reply
+    reply = dbus_message_new_method_return(msg);
+    dbus_message_iter_init_append(reply, &args);
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &snot_name)) { 
+        fprintf(stderr, "Out Of Memory!\n"); 
+        exit(1);
+    }
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, 
+                &snot_vendor)) { 
+        fprintf(stderr, "Out Of Memory!\n"); 
+        exit(1);
+    }
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, 
+                &snot_version)) { 
+        fprintf(stderr, "Out Of Memory!\n"); 
+        exit(1);
+    }
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, 
+                &snot_spec_version)) { 
+        fprintf(stderr, "Out Of Memory!\n"); 
+        exit(1);
+    }
+    printf("info\n");
+
+    return reply;
+}
+
