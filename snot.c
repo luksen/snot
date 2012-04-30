@@ -4,15 +4,21 @@
 #include <dbus/dbus.h>
 
 
+// server information
 const char *snot_name = "Snot";
 const char *snot_vendor = "sleunk";
 const char *snot_version = "0.01";
 const char *snot_spec_version = "1.2";
 
+// global message counter to provide unique ids
+int snot_next_id = 1;
 
+// dbus object handler
 DBusHandlerResult snot_handler(DBusConnection *conn, 
         DBusMessage *msg, void *user_data);
+// exposed methods
 DBusMessage* snot_get_server_information(DBusMessage *msg);
+DBusMessage* snot_notify(DBusMessage *msg);
 
 
 int main(int args, int **argv) {
@@ -63,6 +69,9 @@ snot_handler(DBusConnection *conn, DBusMessage *msg, void *user_data ) {
     if (strcmp(member, "GetServerInformation") == 0) {
         dbus_connection_send(conn, snot_get_server_information(msg), NULL);
     }
+    else if (strcmp(member, "Notify") == 0) {
+        dbus_connection_send(conn, snot_notify(msg), NULL);
+    }
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
@@ -98,3 +107,30 @@ snot_get_server_information(DBusMessage *msg) {
     return reply;
 }
 
+DBusMessage* 
+snot_notify(DBusMessage *msg) {
+    DBusMessage *reply;
+    DBusMessageIter args;
+    char *app_name;
+    //increment global message counter
+    int return_id = snot_next_id++;
+
+    // read the arguments
+    if (!dbus_message_iter_init(msg, &args))
+        fprintf(stderr, "Message has no arguments!\n"); 
+    else if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&args)) 
+        fprintf(stderr, "Argument is not string!\n"); 
+    else 
+        dbus_message_iter_get_basic(&args, &app_name);
+    printf("Sender: %s\n", app_name);
+
+    // compose reply
+    reply = dbus_message_new_method_return(msg);
+    dbus_message_iter_init_append(reply, &args);
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT32, &return_id)) { 
+        fprintf(stderr, "Out Of Memory!\n"); 
+        exit(1);
+    }
+
+    return reply;
+}
