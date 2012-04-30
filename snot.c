@@ -9,6 +9,9 @@ const char *snot_name = "Snot";
 const char *snot_vendor = "sleunk";
 const char *snot_version = "0.01";
 const char *snot_spec_version = "1.2";
+// server capabilities
+#define N_CAPS 0
+const char *snot_capabilities[N_CAPS] = { };
 
 // global message counter to provide unique ids
 int snot_next_id = 1;
@@ -63,6 +66,9 @@ int main(int args, int **argv) {
 }
 
 
+/*
+ * Map DBus Method calls to functions and send back their replies.
+ */
 DBusHandlerResult 
 snot_handler(DBusConnection *conn, DBusMessage *msg, void *user_data ) {
     const char *member = dbus_message_get_member(msg);
@@ -145,7 +151,7 @@ snot_notify(DBusMessage *msg) {
 }
 
 DBusMessage* 
-snot_ge_capabilities(DBusMessage *msg) {
+snot_get_capabilities(DBusMessage *msg) {
     DBusMessage *reply;
     DBusMessageIter args;
     DBusMessageIter cap_array;
@@ -153,12 +159,14 @@ snot_ge_capabilities(DBusMessage *msg) {
     // compose reply
     reply = dbus_message_new_method_return(msg);
     dbus_message_iter_init_append(reply, &args);
-    dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, DBUS_TYPE_STRING,
-            &cap_array);
+    dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "s", &cap_array);
     // set up array
+    for (int i = N_CAPS; i-->0;) {
+        dbus_message_iter_append_basic(&cap_array, DBUS_TYPE_STRING, &snot_capabilities[0]);
+    }
     
 
-    dbus_message_iter_close_container(&args, $cap_array);
+    dbus_message_iter_close_container(&args, &cap_array);
 
     return reply;
 }
