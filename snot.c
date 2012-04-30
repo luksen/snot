@@ -112,17 +112,22 @@ snot_notify(DBusMessage *msg) {
     DBusMessage *reply;
     DBusMessageIter args;
     char *app_name;
+    int replaces_id;
+    char *summary;
     //increment global message counter
     int return_id = snot_next_id++;
 
     // read the arguments
     if (!dbus_message_iter_init(msg, &args))
-        fprintf(stderr, "Message has no arguments!\n"); 
-    else if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&args)) 
-        fprintf(stderr, "Argument is not string!\n"); 
+        fprintf(stderr, "Empty notification received.\n"); 
     else 
         dbus_message_iter_get_basic(&args, &app_name);
-    printf("Sender: %s\n", app_name);
+        dbus_message_iter_next(&args);
+        dbus_message_iter_get_basic(&args, &replaces_id);
+        dbus_message_iter_next(&args);
+        dbus_message_iter_next(&args);
+        dbus_message_iter_get_basic(&args, &summary);
+    printf("%s: %s\n", app_name, summary);
 
     // compose reply
     reply = dbus_message_new_method_return(msg);
