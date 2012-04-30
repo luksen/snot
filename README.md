@@ -5,20 +5,17 @@ WIP!
 Text based notification server for libnotify. 
 
 
-Planned capabilities:
+Capabilities:
 ---------------------
-    "action-icons"      no
-    "actions"           yes
-    "body"              yes
-    "body-hyperlinks"   no
-    "body-images"       no
-    "body-markup"       maybe
-    "icon-multi"        no
-    "icon-static"       no
-    "persistence"       maybe
-    "sound"             maybe
-
-
-personal notes:
----------------
- * read dbus spec on marshalled form
+    name                planned     implemented
+    -------------------------------------------
+    "action-icons"      no          no
+    "actions"           yes         no
+    "body"              yes         no
+    "body-hyperlinks"   no          no
+    "body-images"       no          no
+    "body-markup"       maybe       no
+    "icon-multi"        no          no
+    "icon-static"       no          no
+    "persistence"       maybe       no
+    "sound"             maybe       no
