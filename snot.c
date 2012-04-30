@@ -19,6 +19,7 @@ DBusHandlerResult snot_handler(DBusConnection *conn,
 // exposed methods
 DBusMessage* snot_get_server_information(DBusMessage *msg);
 DBusMessage* snot_notify(DBusMessage *msg);
+DBusMessage* snot_get_capabilities(DBusMessage *msg);
 
 
 int main(int args, int **argv) {
@@ -72,6 +73,9 @@ snot_handler(DBusConnection *conn, DBusMessage *msg, void *user_data ) {
     else if (strcmp(member, "Notify") == 0) {
         dbus_connection_send(conn, snot_notify(msg), NULL);
     }
+    else if (strcmp(member, "GetCapabilities") == 0) {
+        dbus_connection_send(conn, snot_get_capabilities(msg), NULL);
+    }
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
@@ -116,7 +120,7 @@ snot_notify(DBusMessage *msg) {
     char *summary;
     //increment global message counter
     int return_id = snot_next_id++;
-
+    
     // read the arguments
     if (!dbus_message_iter_init(msg, &args))
         fprintf(stderr, "Empty notification received.\n"); 
@@ -127,8 +131,8 @@ snot_notify(DBusMessage *msg) {
         dbus_message_iter_next(&args);
         dbus_message_iter_next(&args);
         dbus_message_iter_get_basic(&args, &summary);
-    printf("%s: %s\n", app_name, summary);
-
+        printf("%s: %s\n", app_name, summary);
+    
     // compose reply
     reply = dbus_message_new_method_return(msg);
     dbus_message_iter_init_append(reply, &args);
@@ -136,6 +140,25 @@ snot_notify(DBusMessage *msg) {
         fprintf(stderr, "Out Of Memory!\n"); 
         exit(1);
     }
+
+    return reply;
+}
+
+DBusMessage* 
+snot_ge_capabilities(DBusMessage *msg) {
+    DBusMessage *reply;
+    DBusMessageIter args;
+    DBusMessageIter cap_array;
+    
+    // compose reply
+    reply = dbus_message_new_method_return(msg);
+    dbus_message_iter_init_append(reply, &args);
+    dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, DBUS_TYPE_STRING,
+            &cap_array);
+    // set up array
+    
+
+    dbus_message_iter_close_container(&args, $cap_array);
 
     return reply;
 }
