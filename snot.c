@@ -49,9 +49,9 @@ void snot_fifo_add(struct snot_fifo *fifo, int id, char *app_name,
     }
     struct snot_fifo *new = malloc(sizeof(struct snot_fifo));
     new->id = id;
-    new->app_name = malloc(sizeof(app_name));
-    new->summary = malloc(sizeof(summary));
-    new->body = malloc(sizeof(body));
+    new->app_name = malloc(strlen(app_name) + 1);
+    new->summary = malloc(strlen(summary) + 1);
+    new->body = malloc(strlen(body) + 1);
     strcpy(new->app_name, app_name);
     strcpy(new->summary, summary);
     strcpy(new->body, body);
@@ -167,6 +167,7 @@ snot_handler(DBusConnection *conn, DBusMessage *msg, void *fifo ) {
     else if (strcmp(member, "GetCapabilities") == 0) {
         dbus_connection_send(conn, snot_get_capabilities(msg), NULL);
     }
+    dbus_connection_flush(conn);
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
@@ -237,12 +238,16 @@ snot_notify(DBusMessage *msg, struct snot_fifo *fifo) {
         snot_fifo_add(fifo, return_id, app_name, summary, body, expire_timeout);
     
     // compose reply
+    printf("ding\n");
     reply = dbus_message_new_method_return(msg);
+    printf("ding\n");
     dbus_message_iter_init_append(reply, &args);
+    printf("ding\n");
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT32, &return_id)) { 
         fprintf(stderr, "Out Of Memory!\n"); 
         exit(1);
     }
+    printf("ding\n");
 
     return reply;
 }
