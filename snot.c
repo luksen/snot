@@ -13,9 +13,6 @@ const char *snot_spec_version = "1.2";
 #define N_CAPS 0
 const char *snot_capabilities[N_CAPS] = { };
 
-// global message counter to provide unique ids
-int snot_next_id = 1;
-
 
 /*
  * FIFO buffer data structure and helper functions to save notifications.
@@ -30,8 +27,8 @@ struct snot_fifo{
 };
 
 void snot_fifo_cut(struct snot_fifo **fifo);
-void snot_fifo_add(struct snot_fifo *fifo, int id, char *app_name, 
-        char *summary, char *body, int timeout);
+int snot_fifo_add(struct snot_fifo *fifo, char *app_name, char *summary, 
+        char *body, int timeout);
 int snot_fifo_size(struct snot_fifo *fifo);
 void snot_fifo_print_top(struct snot_fifo *fifo);
 
@@ -42,13 +39,13 @@ void snot_fifo_cut(struct snot_fifo **fifo) {
     }
 }
 
-void snot_fifo_add(struct snot_fifo *fifo, int id, char *app_name, 
+int snot_fifo_add(struct snot_fifo *fifo, char *app_name, 
         char *summary, char *body, int timeout) {
     while (fifo->next != NULL) {
         fifo = fifo->next;
     }
     struct snot_fifo *new = malloc(sizeof(struct snot_fifo));
-    new->id = id;
+    new->id = fifo->id + 1;
     new->app_name = malloc(strlen(app_name) + 1);
     new->summary = malloc(strlen(summary) + 1);
     new->body = malloc(strlen(body) + 1);
@@ -58,6 +55,7 @@ void snot_fifo_add(struct snot_fifo *fifo, int id, char *app_name,
     new->timeout = timeout;
     new->next = NULL;
     fifo->next = new; 
+    return new->id;
 }
 
 int snot_fifo_size(struct snot_fifo *fifo) {
@@ -212,9 +210,7 @@ snot_notify(DBusMessage *msg, struct snot_fifo *fifo) {
     char *summary;
     char *body;
     int expire_timeout;
-    
-    //increment global message counter
-    int return_id = snot_next_id++;
+    int return_id;
     
     // read the arguments
     if (!dbus_message_iter_init(msg, &args))
@@ -235,7 +231,7 @@ snot_notify(DBusMessage *msg, struct snot_fifo *fifo) {
         // skip hints
         dbus_message_iter_next(&args);
         dbus_message_iter_get_basic(&args, &expire_timeout);
-        snot_fifo_add(fifo, return_id, app_name, summary, body, expire_timeout);
+        return_id = snot_fifo_add(fifo, app_name, summary, body, expire_timeout);
     
     // compose reply
     printf("ding\n");
