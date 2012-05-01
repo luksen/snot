@@ -16,16 +16,84 @@ const char *snot_capabilities[N_CAPS] = { };
 // global message counter to provide unique ids
 int snot_next_id = 1;
 
+
+/*
+ * FIFO buffer data structure and helper functions to save notifications.
+ */
+struct snot_fifo{
+    int id;
+    char *app_name;
+    char *summary;
+    char *body;
+    int timeout;
+    struct snot_fifo *next;
+};
+
+void snot_fifo_cut(struct snot_fifo **fifo);
+void snot_fifo_add(struct snot_fifo *fifo, int id, char *app_name, 
+        char *summary, char *body, int timeout);
+int snot_fifo_size(struct snot_fifo *fifo);
+void snot_fifo_print_top(struct snot_fifo *fifo);
+
+
+void snot_fifo_cut(struct snot_fifo **fifo) {
+    if (snot_fifo_size(*fifo) > 1) {
+        *fifo = (*fifo)->next;
+    }
+}
+
+void snot_fifo_add(struct snot_fifo *fifo, int id, char *app_name, 
+        char *summary, char *body, int timeout) {
+    while (fifo->next != NULL) {
+        fifo = fifo->next;
+    }
+    struct snot_fifo *new = malloc(sizeof(struct snot_fifo));
+    new->id = id;
+    new->app_name = app_name;
+    new->summary = summary;
+    new->body = body;
+    new->timeout = timeout;
+    new->next = NULL;
+    fifo->next = new; 
+}
+
+int snot_fifo_size(struct snot_fifo *fifo) {
+    int size = 0;
+    while (fifo->next != NULL) {
+        fifo = fifo->next;
+        size++;
+    }
+    return size;
+}
+
+void snot_fifo_print_top(struct snot_fifo *fifo) {
+    printf("[%s] %s: %s [%d]\n", fifo->app_name, fifo->summary, fifo->body, 
+            snot_fifo_size(fifo));
+}
+
+
 // dbus object handler
 DBusHandlerResult snot_handler(DBusConnection *conn, 
         DBusMessage *msg, void *user_data);
 // exposed methods
 DBusMessage* snot_get_server_information(DBusMessage *msg);
-DBusMessage* snot_notify(DBusMessage *msg);
+DBusMessage* snot_notify(DBusMessage *msg, struct snot_fifo *fifo);
 DBusMessage* snot_get_capabilities(DBusMessage *msg);
 
 
+/*
+ * main
+ */
 int main(int args, int **argv) {
+    // initialise local message buffer
+    struct snot_fifo *nots = malloc(sizeof(struct snot_fifo));
+    nots->id = 0;
+    nots->app_name = "";
+    nots->summary = "";
+    nots->body = "";
+    nots->timeout = 0;
+    nots->next = NULL;
+    // essential dbus vars
     DBusError err;
     DBusConnection* conn;
     // wrap snot_handler in vtable
@@ -59,9 +127,10 @@ int main(int args, int **argv) {
 
     // run incoming method calls through the handler
     dbus_connection_register_object_path(conn, "/org/freedesktop/Notifications", 
-            snot_handler_vt, NULL);
+            snot_handler_vt, nots);
     while (dbus_connection_read_write_dispatch(conn, -1)) {
-        printf("loop\n");
+        snot_fifo_print_top(nots);
+        snot_fifo_cut(&nots);
     }
 }
 
@@ -70,14 +139,13 @@ int main(int args, int **argv) {
  * Map DBus Method calls to functions and send back their replies.
  */
 DBusHandlerResult 
-snot_handler(DBusConnection *conn, DBusMessage *msg, void *user_data ) {
+snot_handler(DBusConnection *conn, DBusMessage *msg, void *fifo ) {
     const char *member = dbus_message_get_member(msg);
-    printf("%s\n", member);
     if (strcmp(member, "GetServerInformation") == 0) {
         dbus_connection_send(conn, snot_get_server_information(msg), NULL);
     }
     else if (strcmp(member, "Notify") == 0) {
-        dbus_connection_send(conn, snot_notify(msg), NULL);
+        dbus_connection_send(conn, snot_notify(msg, fifo), NULL);
     }
     else if (strcmp(member, "GetCapabilities") == 0) {
         dbus_connection_send(conn, snot_get_capabilities(msg), NULL);
@@ -118,12 +186,15 @@ snot_get_server_information(DBusMessage *msg) {
 }
 
 DBusMessage* 
-snot_notify(DBusMessage *msg) {
+snot_notify(DBusMessage *msg, struct snot_fifo *fifo) {
     DBusMessage *reply;
     DBusMessageIter args;
     char *app_name;
     int replaces_id;
     char *summary;
+    char *body;
+    int expire_timeout;
+    
     //increment global message counter
     int return_id = snot_next_id++;
     
@@ -135,9 +206,18 @@ snot_notify(DBusMessage *msg) {
         dbus_message_iter_next(&args);
         dbus_message_iter_get_basic(&args, &replaces_id);
         dbus_message_iter_next(&args);
+        // skip app_icon
         dbus_message_iter_next(&args);
         dbus_message_iter_get_basic(&args, &summary);
-        printf("%s: %s\n", app_name, summary);
+        dbus_message_iter_next(&args);
+        dbus_message_iter_get_basic(&args, &body);
+        dbus_message_iter_next(&args);
+        // skip actions
+        dbus_message_iter_next(&args);
+        // skip hints
+        dbus_message_iter_next(&args);
+        dbus_message_iter_get_basic(&args, &expire_timeout);
+        snot_fifo_add(fifo, return_id, app_name, summary, body, expire_timeout);
     
     // compose reply
     reply = dbus_message_new_method_return(msg);
