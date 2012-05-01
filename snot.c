@@ -46,7 +46,6 @@ void snot_fifo_add(struct snot_fifo *fifo, int id, char *app_name,
         char *summary, char *body, int timeout) {
     while (fifo->next != NULL) {
         fifo = fifo->next;
-        printf("->  %s\n", fifo->summary);
     }
     struct snot_fifo *new = malloc(sizeof(struct snot_fifo));
     new->id = id;
@@ -144,10 +143,8 @@ int main(int args, int **argv) {
             snot_handler_vt, nots);
     while (dbus_connection_read_write_dispatch(conn, 1000)) {
         snot_fifo_print_top(nots);
-        printf("------\n");
         //snot_fifo_print_all(nots);
         nots->timeout--;
-        printf("%d\n", nots->timeout);
         if (nots->timeout < 0) {
             snot_fifo_cut(&nots);
         }
@@ -217,7 +214,6 @@ snot_notify(DBusMessage *msg, struct snot_fifo *fifo) {
     
     //increment global message counter
     int return_id = snot_next_id++;
-    printf("notification\n");
     
     // read the arguments
     if (!dbus_message_iter_init(msg, &args))
