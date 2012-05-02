@@ -234,16 +234,12 @@ snot_notify(DBusMessage *msg, struct snot_fifo *fifo) {
         return_id = snot_fifo_add(fifo, app_name, summary, body, expire_timeout);
     
     // compose reply
-    printf("ding\n");
     reply = dbus_message_new_method_return(msg);
-    printf("ding\n");
     dbus_message_iter_init_append(reply, &args);
-    printf("ding\n");
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT32, &return_id)) { 
         fprintf(stderr, "Out Of Memory!\n"); 
         exit(1);
     }
-    printf("ding\n");
 
     return reply;
 }
