@@ -11,8 +11,8 @@ const char *snot_vendor = "sleunk";
 const char *snot_version = "0.01";
 const char *snot_spec_version = "1.2";
 // server capabilities
-#define N_CAPS 0
-const char *snot_capabilities[N_CAPS] = { };
+#define N_CAPS 1
+const char *snot_capabilities[N_CAPS] = { "body" };
 
 
 /*
