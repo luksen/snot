@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <stdio.h>
 #include <dbus/dbus.h>
@@ -10,8 +11,8 @@ const char *snot_vendor = "sleunk";
 const char *snot_version = "0.01";
 const char *snot_spec_version = "1.2";
 // server capabilities
-#define N_CAPS 0
-const char *snot_capabilities[N_CAPS] = { };
+#define N_CAPS 1
+const char *snot_capabilities[N_CAPS] = { "body" };
 
 
 /*
@@ -137,13 +138,13 @@ int main(int args, int **argv) {
     }
 
     // run incoming method calls through the handler
-    dbus_connection_register_object_path(conn, "/org/freedesktop/Notifications", 
+    dbus_connection_register_object_path(conn, "/org/freedesktop/Notifications",
             snot_handler_vt, nots);
-    while (dbus_connection_read_write_dispatch(conn, 1000)) {
+    int block = 0;
+    while (dbus_connection_read_write_dispatch(conn, block)) {
+        sleep(1);
         snot_fifo_print_top(nots);
-        //snot_fifo_print_all(nots);
-        nots->timeout--;
-        if (nots->timeout < 0) {
+        if (nots->timeout-- < 0) {
             snot_fifo_cut(&nots);
         }
     }

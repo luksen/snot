@@ -11,7 +11,7 @@ Capabilities:
     -------------------------------------------
     "action-icons"      no          no
     "actions"           yes         no
-    "body"              yes         no
+    "body"              yes         yes
     "body-hyperlinks"   no          no
     "body-images"       no          no
     "body-markup"       maybe       no
