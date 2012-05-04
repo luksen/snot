@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <stdio.h>
 #include <dbus/dbus.h>
@@ -139,9 +140,14 @@ int main(int args, int **argv) {
     // run incoming method calls through the handler
     dbus_connection_register_object_path(conn, "/org/freedesktop/Notifications", 
             snot_handler_vt, &nots);
-    while (dbus_connection_read_write_dispatch(conn, 1000)) {
+    int block = 0;
+    while (dbus_connection_read_write_dispatch(conn, block)) {
+        printf("-----\n");
         snot_fifo_print_top(nots);
+        block = -1;
         if (nots != NULL) {
+            block = 0;
+            sleep(1);
             if (--nots->timeout < 1) {
                 snot_fifo_cut(&nots);
             }
