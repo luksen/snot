@@ -15,6 +15,15 @@ const char *snot_capabilities[N_CAPS] = { };
 
 
 /*
+ * unique IDs
+ */
+int snot_id() {
+    static int id = 1;
+    return ++id;
+}
+
+
+/*
  * FIFO buffer data structure and helper functions to save notifications.
  */
 struct snot_fifo{
@@ -48,7 +57,7 @@ int snot_fifo_add(struct snot_fifo **fifo, char *app_name,
         char *summary, char *body, int timeout) {
     struct snot_fifo *new = malloc(sizeof(struct snot_fifo));
     if (*fifo == NULL) {
-        new->id = 3;
+        new->id = snot_id();
         new->app_name = malloc(strlen(app_name) + 1);
         new->summary = malloc(strlen(summary) + 1);
         new->body = malloc(strlen(body) + 1);
