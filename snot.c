@@ -142,8 +142,7 @@ int main(int args, int **argv) {
     while (dbus_connection_read_write_dispatch(conn, 1000)) {
         snot_fifo_print_top(nots);
         if (nots != NULL) {
-            nots->timeout--;
-            if (nots->timeout < 0) {
+            if (--nots->timeout < 1) {
                 snot_fifo_cut(&nots);
             }
         }
