@@ -148,6 +148,9 @@ int main(int args, int **argv) {
         if (nots != NULL) {
             block = 0;
             sleep(1);
+            if (--nots->timeout < 1) {
+                snot_fifo_cut(&nots);
+            }
         }
     }
     free(snot_handler_vt);
