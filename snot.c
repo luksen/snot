@@ -56,19 +56,28 @@ void snot_fifo_cut(struct snot_fifo **fifo) {
 
 int snot_fifo_add(struct snot_fifo **fifo, char *app_name, 
         char *summary, char *body, int timeout) {
+    printf("add\n");
     struct snot_fifo *new = malloc(sizeof(struct snot_fifo));
+    new->id = snot_id();
+    new->app_name = malloc(strlen(app_name) + 1);
+    new->summary = malloc(strlen(summary) + 1);
+    new->body = malloc(strlen(body) + 1);
+    strcpy(new->app_name, app_name);
+    strcpy(new->summary, summary);
+    strcpy(new->body, body);
+    new->timeout = timeout;
+    new->next = NULL;
     if (*fifo == NULL) {
-        new->id = snot_id();
-        new->app_name = malloc(strlen(app_name) + 1);
-        new->summary = malloc(strlen(summary) + 1);
-        new->body = malloc(strlen(body) + 1);
-        strcpy(new->app_name, app_name);
-        strcpy(new->summary, summary);
-        strcpy(new->body, body);
-        new->timeout = timeout;
-        new->next = NULL;
         *fifo = new;
+    } 
+    else {
+        struct snot_fifo *tmp = *fifo;
+        while (tmp->next != NULL) {
+            tmp = tmp->next;
+        }
+        tmp->next = new;
     }
+    
     return new->id;
 }
 
@@ -138,20 +147,21 @@ int main(int args, int **argv) {
     }
 
     // run incoming method calls through the handler
-    dbus_connection_register_object_path(conn, "/org/freedesktop/Notifications", 
+    dbus_connection_register_object_path(conn, "/org/freedesktop/Notifications",
             snot_handler_vt, &nots);
-    int block = 0;
-    while (dbus_connection_read_write_dispatch(conn, block)) {
+    int block = -1;
+    while (dbus_connection_read_write(conn, block)) {
+        while (dbus_connection_dispatch(conn) == DBUS_DISPATCH_DATA_REMAINS);
         printf("-----\n");
         snot_fifo_print_top(nots);
         block = -1;
         if (nots != NULL) {
             block = 0;
-            sleep(1);
             if (--nots->timeout < 1) {
                 snot_fifo_cut(&nots);
             }
         }
+        sleep(1);
     }
     free(snot_handler_vt);
 }
