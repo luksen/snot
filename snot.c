@@ -1,7 +1,7 @@
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 #include <dbus/dbus.h>
 
 
@@ -56,7 +56,6 @@ void snot_fifo_cut(struct snot_fifo **fifo) {
 
 int snot_fifo_add(struct snot_fifo **fifo, char *app_name, 
         char *summary, char *body, int timeout) {
-    printf("add\n");
     struct snot_fifo *new = malloc(sizeof(struct snot_fifo));
     new->id = snot_id();
     new->app_name = malloc(strlen(app_name) + 1);
@@ -77,7 +76,6 @@ int snot_fifo_add(struct snot_fifo **fifo, char *app_name,
         }
         tmp->next = new;
     }
-    
     return new->id;
 }
 
@@ -150,18 +148,27 @@ int main(int args, int **argv) {
     dbus_connection_register_object_path(conn, "/org/freedesktop/Notifications",
             snot_handler_vt, &nots);
     int block = -1;
-    while (dbus_connection_read_write(conn, block)) {
-        while (dbus_connection_dispatch(conn) == DBUS_DISPATCH_DATA_REMAINS);
-        printf("-----\n");
-        snot_fifo_print_top(nots);
-        block = -1;
-        if (nots != NULL) {
-            block = 0;
-            if (--nots->timeout < 1) {
-                snot_fifo_cut(&nots);
+    time_t expire;
+    time(&expire);
+    while (dbus_connection_read_write_dispatch(conn, block)) {
+        if (nots != NULL && block == -1) {
+            block = 500;
+            time(&expire);
+            expire += (time_t)(nots->timeout);
+        }
+        else if (nots != NULL && expire < time(NULL)) {
+            snot_fifo_cut(&nots);
+            if (nots != NULL) {
+                block = 500;
+                time(&expire);
+                expire += (time_t)(nots->timeout);
+            }
+            else {
+                block = -1;
+                printf("\n");
             }
         }
-        sleep(1);
+        snot_fifo_print_top(nots);
     }
     free(snot_handler_vt);
 }
@@ -174,6 +181,7 @@ DBusHandlerResult
 snot_handler(DBusConnection *conn, DBusMessage *msg, void *fifo ) {
     DBusMessage *reply;
     const char *member = dbus_message_get_member(msg);
+    //printf("handler %s\n", member);
     if (strcmp(member, "GetServerInformation") == 0) {
         reply = snot_get_server_information(msg);
         dbus_connection_send(conn, reply, NULL);
@@ -231,7 +239,7 @@ snot_notify(DBusMessage *msg, struct snot_fifo **fifo) {
     int replaces_id;
     char *summary;
     char *body;
-    int expire_timeout;
+    int timeout;
     int return_id;
     
     // read the arguments
@@ -252,8 +260,8 @@ snot_notify(DBusMessage *msg, struct snot_fifo **fifo) {
         dbus_message_iter_next(&args);
         // skip hints
         dbus_message_iter_next(&args);
-        dbus_message_iter_get_basic(&args, &expire_timeout);
-        return_id = snot_fifo_add(fifo, app_name, summary, body, expire_timeout);
+        dbus_message_iter_get_basic(&args, &timeout);
+        return_id = snot_fifo_add(fifo, app_name, summary, body, timeout);
     
     // compose reply
     reply = dbus_message_new_method_return(msg);
