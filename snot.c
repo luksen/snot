@@ -108,7 +108,7 @@ DBusMessage* snot_get_capabilities(DBusMessage *msg);
 /*
  * main
  */
-int main(int args, int **argv) {
+int main(int args, char **argv) {
     // initialise local message buffer
     struct snot_fifo *nots;
     nots = NULL;
