@@ -109,6 +109,8 @@ DBusMessage* snot_get_capabilities(DBusMessage *msg);
  * main
  */
 int main(int args, char **argv) {
+    // make sure stdout gets written after every line
+    setvbuf(stdout, NULL, _IOLBF, 0);
     // initialise local message buffer
     struct snot_fifo *nots;
     nots = NULL;
