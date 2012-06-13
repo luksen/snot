@@ -90,9 +90,14 @@ int snot_fifo_size(struct snot_fifo *fifo) {
 
 void snot_fifo_print_top(struct snot_fifo *fifo) {
     if (fifo != NULL) {
-        printf("[%s] %s: %s [%d]\n", fifo->app_name, fifo->summary, fifo->body, 
+        printf("[%s] %s: %s [%d]", fifo->app_name, fifo->summary, fifo->body, 
                 snot_fifo_size(fifo));
     }
+    else {
+        printf(" ");
+    }
+    printf("\n");
+    fflush(stdout);
 }
 
 
@@ -109,8 +114,6 @@ DBusMessage* snot_get_capabilities(DBusMessage *msg);
  * main
  */
 int main(int args, char **argv) {
-    // make sure stdout gets written after every line
-    setvbuf(stdout, NULL, _IOLBF, 0);
     // initialise local message buffer
     struct snot_fifo *nots;
     nots = NULL;
@@ -167,7 +170,6 @@ int main(int args, char **argv) {
             }
             else {
                 block = -1;
-                printf("\n");
             }
         }
         snot_fifo_print_top(nots);
