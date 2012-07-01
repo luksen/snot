@@ -40,7 +40,7 @@ void snot_fifo_cut(struct snot_fifo **fifo);
 int snot_fifo_add(struct snot_fifo **fifo, char *app_name, char *summary, 
         char *body, int timeout);
 int snot_fifo_size(struct snot_fifo *fifo);
-void snot_fifo_print_top(struct snot_fifo *fifo);
+void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt);
 
 
 void snot_fifo_cut(struct snot_fifo **fifo) {
@@ -88,14 +88,33 @@ int snot_fifo_size(struct snot_fifo *fifo) {
     return size;
 }
 
-void snot_fifo_print_top(struct snot_fifo *fifo) {
+void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt) {
     if (fifo != NULL) {
-        printf("[%s] %s: %s [%d]", fifo->app_name, fifo->summary, fifo->body, 
-                snot_fifo_size(fifo));
+        char c;
+        for (int i = 0; i < strlen(fmt); i++)  {
+            c = fmt[i];
+            if (c == '%') {
+                i++;
+                c = fmt[i];
+                switch (c) {
+                    case 'n':
+                        printf("%s", fifo->app_name);
+                        break;
+                    case 's':
+                        printf("%s", fifo->summary);
+                        break;
+                    case 'b':
+                        printf("%s", fifo->body);
+                        break;
+                    case 'q':
+                        printf("%d", snot_fifo_size(fifo));
+                        break;
+                }
+            }
+            else putchar(c);
+        }
     }
-    else {
-        printf(" ");
-    }
+    else printf(" ");
     printf("\n");
     fflush(stdout);
 }
@@ -172,7 +191,7 @@ int main(int args, char **argv) {
                 block = -1;
             }
         }
-        snot_fifo_print_top(nots);
+        snot_fifo_print_top(nots, "[%n] %s: %b [%q]");
     }
     free(snot_handler_vt);
 }
