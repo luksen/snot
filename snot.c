@@ -35,10 +35,26 @@ static struct snot_config {
 
 void snot_config_init() {
     config.timeout = 3;
-    config.format = "[%n] %s: %b [%q]";
+    config.format = malloc(18);
+    strcpy(config.format, "[%a] %s: %b [%q]");
 }
 
-
+void snot_config_parse_cmd(int argc, char **argv) {
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] == '-') {
+            if ((argv[i][1] == 't') || (!strcmp(argv[i], "--timeout"))) {
+                i++;
+                sscanf(argv[i], "%d", &config.timeout);
+            }
+            else if ((argv[i][1] == 'f') || (!strcmp(argv[i], "--format"))) {
+                i++;
+                free(config.format);
+                config.format = malloc(strlen(argv[i]) + 1);
+                sscanf(argv[i], "%s", config.format);
+            }
+        }
+    }  
+}
 
 
 /*
@@ -115,7 +131,7 @@ void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt) {
                 i++;
                 c = fmt[i];
                 switch (c) {
-                    case 'n':
+                    case 'a':
                         printf("%s", fifo->app_name);
                         break;
                     case 's':
@@ -154,6 +170,7 @@ DBusMessage* snot_get_capabilities(DBusMessage *msg);
  */
 int main(int args, char **argv) {
     snot_config_init();
+    snot_config_parse_cmd(args, argv);
     // initialise local message buffer
     struct snot_fifo *nots;
     nots = NULL;
