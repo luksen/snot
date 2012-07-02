@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <dbus/dbus.h>
 
@@ -22,6 +23,22 @@ int snot_id() {
     static int id = 1;
     return ++id;
 }
+
+
+/*
+ * global configuration with defaults
+ */
+static struct snot_config {
+    int timeout;
+    char *format;
+} config;
+
+void snot_config_init() {
+    config.timeout = 3;
+    config.format = "[%n] %s: %b [%q]";
+}
+
+
 
 
 /*
@@ -65,6 +82,7 @@ int snot_fifo_add(struct snot_fifo **fifo, char *app_name,
     strcpy(new->summary, summary);
     strcpy(new->body, body);
     new->timeout = timeout;
+    if (timeout == -1) new->timeout = config.timeout;
     new->next = NULL;
     if (*fifo == NULL) {
         *fifo = new;
@@ -119,6 +137,9 @@ void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt) {
 }
 
 
+/*
+ * DBus functions
+ */
 // dbus object handler
 DBusHandlerResult snot_handler(DBusConnection *conn, 
         DBusMessage *msg, void *user_data);
@@ -132,6 +153,7 @@ DBusMessage* snot_get_capabilities(DBusMessage *msg);
  * main
  */
 int main(int args, char **argv) {
+    snot_config_init();
     // initialise local message buffer
     struct snot_fifo *nots;
     nots = NULL;
@@ -175,30 +197,31 @@ int main(int args, char **argv) {
     time(&expire);
     time_t last_print = time(NULL);
     while (dbus_connection_read_write_dispatch(conn, block)) {
-        if (nots != NULL && block == -1) {
-            block = 1000;
-            time(&expire);
-            expire += (time_t)(nots->timeout);
-        }
-        else if (nots != NULL && expire <= time(NULL)) {
-            snot_fifo_cut(&nots);
-            if (nots != NULL) {
+        if (nots != NULL) {
+            if (block == -1) {
                 block = 1000;
                 time(&expire);
                 expire += (time_t)(nots->timeout);
             }
-            else {
-                block = -1;
-                printf("\n");
-                fflush(stdout);
+            else if (expire <= time(NULL)) {
+                snot_fifo_cut(&nots);
+                if (nots != NULL) {
+                    block = 1000;
+                    time(&expire);
+                    expire += (time_t)(nots->timeout);
+                }
+                else {
+                    block = -1;
+                    printf("\n");
+                    fflush(stdout);
+                    time(&last_print);
+                }
+            }
+            if (time(NULL) - last_print >= 1) {
+                snot_fifo_print_top(nots, config.format);
                 time(&last_print);
             }
         }
-        if (nots != NULL)
-            if (time(NULL) - last_print >= 1) {
-                snot_fifo_print_top(nots, "[%n] %s: %b [%q]");
-                time(&last_print);
-            }
     }
     free(snot_handler_vt);
 }
