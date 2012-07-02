@@ -176,14 +176,14 @@ int main(int args, char **argv) {
     time_t last_print = time(NULL);
     while (dbus_connection_read_write_dispatch(conn, block)) {
         if (nots != NULL && block == -1) {
-            block = 100;
+            block = 1000;
             time(&expire);
             expire += (time_t)(nots->timeout);
         }
         else if (nots != NULL && expire <= time(NULL)) {
             snot_fifo_cut(&nots);
             if (nots != NULL) {
-                block = 100;
+                block = 1000;
                 time(&expire);
                 expire += (time_t)(nots->timeout);
             }
