@@ -114,7 +114,6 @@ void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt) {
             else putchar(c);
         }
     }
-    else printf(" ");
     printf("\n");
     fflush(stdout);
 }
@@ -174,24 +173,32 @@ int main(int args, char **argv) {
     int block = -1;
     time_t expire;
     time(&expire);
+    time_t last_print = time(NULL);
     while (dbus_connection_read_write_dispatch(conn, block)) {
         if (nots != NULL && block == -1) {
-            block = 500;
+            block = 100;
             time(&expire);
             expire += (time_t)(nots->timeout);
         }
-        else if (nots != NULL && expire < time(NULL)) {
+        else if (nots != NULL && expire <= time(NULL)) {
             snot_fifo_cut(&nots);
             if (nots != NULL) {
-                block = 500;
+                block = 100;
                 time(&expire);
                 expire += (time_t)(nots->timeout);
             }
             else {
                 block = -1;
+                printf("\n");
+                fflush(stdout);
+                time(&last_print);
             }
         }
-        snot_fifo_print_top(nots, "[%n] %s: %b [%q]");
+        if (nots != NULL)
+            if (time(NULL) - last_print >= 1) {
+                snot_fifo_print_top(nots, "[%n] %s: %b [%q]");
+                time(&last_print);
+            }
     }
     free(snot_handler_vt);
 }
