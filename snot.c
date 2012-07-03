@@ -68,9 +68,11 @@ void snot_config_parse_cmd(int argc, char **argv) {
                 i++;
                 free(config.format);
                 char fmt[6];
-                sprintf(fmt, "%%%dc", strlen(argv[i]));
-                config.format = malloc(strlen(argv[i]) + 1);
+                int len = strlen(argv[i]);
+                sprintf(fmt, "%%%dc", len);
+                config.format = malloc(len + 1);
                 sscanf(argv[i], fmt, config.format);
+                config.format[len] = '\0';
             }
         }
     }  
