@@ -34,7 +34,9 @@ void timeval_add_msecs(struct timeval *tp, int msecs) {
 }
 
 int timeval_geq(struct timeval this, struct timeval other) {
-    if (this.tv_sec >= other.tv_sec)
+    if (this.tv_sec > other.tv_sec)
+        return 1;
+    if (this.tv_sec == other.tv_sec)
         if (this.tv_usec >= other.tv_usec)
             return 1;
     return 0;
@@ -50,7 +52,7 @@ static struct snot_config {
 } config;
 
 void snot_config_init() {
-    config.timeout = 3;
+    config.timeout = 3000;
     config.format = malloc(18);
     strcpy(config.format, "[%a] %s: %b [%q]");
 }
@@ -233,8 +235,8 @@ int main(int args, char **argv) {
     struct timeval now = { };
     gettimeofday(&now, NULL);
     while (dbus_connection_read_write_dispatch(conn, block)) {
-        gettimeofday(&now, NULL);
         if (nots != NULL) {
+            gettimeofday(&now, NULL);
             if (block == -1) {
                 block = 1000;
                 gettimeofday(&expire, NULL);
