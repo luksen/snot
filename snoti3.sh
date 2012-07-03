@@ -3,10 +3,25 @@
 
 exec 3< <($1)
 
+echo "{\"version\":1}" || exit 1
+echo "[" || exit 1
+
+run=0
 i3status | while :
 do
     read i3line
+    if [ $run -lt 2 ]
+    then
+        let run++
+        continue
+    fi
     read -t 1 bgline <&3
-    echo "$bgline | $i3line" || exit 1
+    if [ $run -eq 2 ]
+    then
+        let run++
+        echo "[{\"full_text\":\"$bgline<--\"},${i3line:1}" || exit 1
+        continue
+    fi
+    echo ",[{\"full_text\":\"$bgline<--\"},${i3line:2}" || exit 1
 done 
 
