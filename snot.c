@@ -67,8 +67,10 @@ void snot_config_parse_cmd(int argc, char **argv) {
             else if ((argv[i][1] == 'f') || (!strcmp(argv[i], "--format"))) {
                 i++;
                 free(config.format);
+                char fmt[6];
+                sprintf(fmt, "%%%dc", strlen(argv[i]));
                 config.format = malloc(strlen(argv[i]) + 1);
-                sscanf(argv[i], "%s", config.format);
+                sscanf(argv[i], fmt, config.format);
             }
         }
     }  
