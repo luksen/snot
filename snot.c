@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include <time.h>
+#include <sys/time.h>
 #include <dbus/dbus.h>
 
 
@@ -22,6 +22,22 @@ const char *snot_capabilities[N_CAPS] = { "body" };
 int snot_id() {
     static int id = 1;
     return ++id;
+}
+
+
+/*
+ * struct timeval covinience functions
+ */
+void timeval_add_msecs(struct timeval *tp, int msecs) {
+    tp->tv_sec += msecs/1000;
+    tp->tv_usec += (msecs%1000)*1000;
+}
+
+int timeval_geq(struct timeval this, struct timeval other) {
+    if (this.tv_sec >= other.tv_sec)
+        if (this.tv_usec >= other.tv_usec)
+            return 1;
+    return 0;
 }
 
 
@@ -210,33 +226,38 @@ int main(int args, char **argv) {
     dbus_connection_register_object_path(conn, "/org/freedesktop/Notifications",
             snot_handler_vt, &nots);
     int block = -1;
-    time_t expire;
-    time(&expire);
-    time_t last_print = time(NULL);
+    struct timeval expire = { };
+    gettimeofday(&expire, NULL);
+    struct timeval last_print = { };
+    gettimeofday(&last_print, NULL);
+    struct timeval now = { };
+    gettimeofday(&now, NULL);
     while (dbus_connection_read_write_dispatch(conn, block)) {
+        gettimeofday(&now, NULL);
         if (nots != NULL) {
             if (block == -1) {
                 block = 1000;
-                time(&expire);
-                expire += (time_t)(nots->timeout);
+                gettimeofday(&expire, NULL);
+                timeval_add_msecs(&expire, nots->timeout);
             }
-            else if (expire <= time(NULL)) {
+            else if (timeval_geq(now, expire)) {
                 snot_fifo_cut(&nots);
                 if (nots != NULL) {
                     block = 1000;
-                    time(&expire);
-                    expire += (time_t)(nots->timeout);
+                    gettimeofday(&expire, NULL);
+                    timeval_add_msecs(&expire, nots->timeout);
                 }
                 else {
                     block = -1;
                     printf("\n");
                     fflush(stdout);
-                    time(&last_print);
+                    gettimeofday(&last_print, NULL);
                 }
             }
-            if (time(NULL) - last_print >= 1) {
+            now.tv_sec--;
+            if (timeval_geq(now, last_print)) {
                 snot_fifo_print_top(nots, config.format);
-                time(&last_print);
+                gettimeofday(&last_print, NULL);
             }
         }
     }
