@@ -1,12 +1,32 @@
-snot - simple notification
-==========================
-WIP!
+## snot - simple notification
 
 Text based notification server for libnotify. 
 
+# Options
 
-Capabilities:
----------------------
+`-t or --timeout` Overwrite the standard timeout for notifications without 
+    specified timeout
+
+`-f or --format` Define the output format as described in the next paragraph.
+
+# Format
+
+Snot allows you to define the output string on the command line. The following
+substitutions are done:
+
+`%a` application name
+
+`%s` notification summary
+
+`%b` notification body
+
+`%q` size of queue (not yet displayed notifications)
+
+Example:
+
+    snot -f "%a: _%s_ %b [%q]"
+
+# Capabilities
     name                planned     implemented
     -------------------------------------------
     "action-icons"      no          no
