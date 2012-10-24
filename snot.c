@@ -232,11 +232,11 @@ int main(int args, char **argv) {
     dbus_connection_register_object_path(conn, "/org/freedesktop/Notifications",
             snot_handler_vt, &nots);
     int block = -1;
-    struct timeval expire = { };
+    struct timeval expire;
     gettimeofday(&expire, NULL);
-    struct timeval last_print = { };
+    struct timeval last_print;
     gettimeofday(&last_print, NULL);
-    struct timeval now = { };
+    struct timeval now;
     gettimeofday(&now, NULL);
     while (dbus_connection_read_write_dispatch(conn, block)) {
         if (nots != NULL) {
