@@ -53,7 +53,7 @@ static void snot_config_parse_cmd(int argc, char **argv);
 /*
  * fifo functions
  */
-static void snot_fifo_cut(struct snot_fifo **fifo);
+static int snot_fifo_cut(struct snot_fifo **fifo);
 static int snot_fifo_add(struct snot_fifo **fifo, char *app_name, char *summary,
         char *body, int timeout);
 static int snot_fifo_size(struct snot_fifo *fifo);

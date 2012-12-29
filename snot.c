@@ -84,7 +84,8 @@ static void snot_config_parse_cmd(int argc, char **argv) {
  * fifo
  *******************************************************************************
  */
-static void snot_fifo_cut(struct snot_fifo **fifo) {
+static int snot_fifo_cut(struct snot_fifo **fifo) {
+    int id = (*fifo)->id;
     if (snot_fifo_size(*fifo) > 0) {
         struct snot_fifo *tmp = (*fifo)->next;
         free((*fifo)->app_name);
@@ -93,6 +94,7 @@ static void snot_fifo_cut(struct snot_fifo **fifo) {
         free(*fifo);
         *fifo = tmp;
     }
+    return id;
 }
 
 static int snot_fifo_add(struct snot_fifo **fifo, char *app_name, 
@@ -270,6 +272,30 @@ static DBusMessage* snot_get_capabilities(DBusMessage *msg) {
     return reply;
 }
 
+static void snot_signal_notification_closed(DBusConnection* conn, int id, int reason) {
+    printf("closed called with %d %d\n", id, reason);
+    DBusMessageIter args;
+    DBusMessage* msg;
+    // create a signal & check for errors 
+    msg = dbus_message_new_signal("/org/freedesktop/Notifications",
+            "org.freedesktop.Notifications",
+            "NotificationClosed");
+    if (!msg) die("Could not prepare signal message in %s", __func__);
+
+    // append arguments onto signal
+    dbus_message_iter_init_append(msg, &args);
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT32, &id))
+        die("Could not append argument to signal in %s", __func__);
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT32, &reason))
+        die("Could not append argument to signal in %s", __func__);
+
+    // send the message and flush the connection
+    if (!dbus_connection_send(conn, msg, NULL))
+        die("Sending signal failed in %s", __func__);
+    dbus_connection_flush(conn);
+    printf("after flush\n");
+}
+
 
 /*
  *******************************************************************************
@@ -333,7 +359,8 @@ int main(int args, char **argv) {
         }
         else if (timeval_geq(now, expire)) {
             // notification expired
-            snot_fifo_cut(&nots);
+            int id = snot_fifo_cut(&nots);
+            snot_signal_notification_closed(conn, id, 1);
             if (nots) {
                 block = 1000;
                 gettimeofday(&expire, NULL);
