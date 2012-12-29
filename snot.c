@@ -123,6 +123,30 @@ static int snot_fifo_add(struct snot_fifo **fifo, char *app_name,
     return new->id;
 }
 
+static int snot_fifo_remove(struct snot_fifo **fifo, int id) {
+    struct snot_fifo *tmp = *fifo;
+    int removed_sth = 0;
+    while (tmp) {
+        if (tmp->id == id || !id) {
+            *fifo = (*fifo)->next;
+            removed_sth = 1;
+            break;
+        }
+        if (tmp->next && tmp->next->id == id) {
+            struct snot_fifo* save= tmp->next;
+            tmp->next = tmp->next->next;
+            free(save->app_name);
+            free(save->summary);
+            free(save->body);
+            free(save);
+            removed_sth = 1;
+            break;
+        }
+        tmp = tmp->next;
+    }
+    return removed_sth;
+}
+
 static int snot_fifo_size(struct snot_fifo *fifo) {
     int size = 0;
     while (fifo != NULL) {
@@ -185,6 +209,10 @@ static DBusHandlerResult snot_handler(DBusConnection *conn, DBusMessage *msg,
         reply = snot_get_capabilities(msg);
         dbus_connection_send(conn, reply, NULL);
     }
+    else if (strcmp(member, "CloseNotification") == 0) {
+        reply = snot_close_notification(msg, conn, fifo);
+        dbus_connection_send(conn, reply, NULL);
+    }
     dbus_message_unref(reply);
     dbus_connection_flush(conn);
     return DBUS_HANDLER_RESULT_HANDLED;
@@ -226,6 +254,7 @@ static DBusMessage* snot_notify(DBusMessage *msg, struct snot_fifo **fifo) {
     else 
         dbus_message_iter_get_basic(&args, &app_name);
         dbus_message_iter_next(&args);
+        // replaces_id ignored atm
         dbus_message_iter_get_basic(&args, &replaces_id);
         dbus_message_iter_next(&args);
         // skip app_icon
@@ -272,8 +301,28 @@ static DBusMessage* snot_get_capabilities(DBusMessage *msg) {
     return reply;
 }
 
+static DBusMessage* snot_close_notification(DBusMessage *msg,
+        DBusConnection *conn, struct snot_fifo **fifo) {
+    DBusMessage *reply;
+    DBusMessageIter args;
+    int id;
+    
+    // read the arguments
+    dbus_message_iter_init(msg, &args);
+    dbus_message_iter_get_basic(&args, &id);
+    int removed_sth = snot_fifo_remove(fifo, id);
+    
+    // compose reply
+    if (removed_sth) {
+        reply = dbus_message_new_method_return(msg);
+        snot_signal_notification_closed(conn, id, 3);
+    }
+    else
+        reply = dbus_message_new_error(msg, DBUS_ERROR_FAILED, NULL);
+    return reply;
+}
+
 static void snot_signal_notification_closed(DBusConnection* conn, int id, int reason) {
-    printf("closed called with %d %d\n", id, reason);
     DBusMessageIter args;
     DBusMessage* msg;
     // create a signal & check for errors 
@@ -293,7 +342,6 @@ static void snot_signal_notification_closed(DBusConnection* conn, int id, int re
     if (!dbus_connection_send(conn, msg, NULL))
         die("Sending signal failed in %s", __func__);
     dbus_connection_flush(conn);
-    printf("after flush\n");
 }
 
 

@@ -56,6 +56,7 @@ static void snot_config_parse_cmd(int argc, char **argv);
 static int snot_fifo_cut(struct snot_fifo **fifo);
 static int snot_fifo_add(struct snot_fifo **fifo, char *app_name, char *summary,
         char *body, int timeout);
+static int snot_fifo_remove(struct snot_fifo **fifo, int id); 
 static int snot_fifo_size(struct snot_fifo *fifo);
 static void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt);
 
@@ -69,3 +70,7 @@ static DBusHandlerResult snot_handler(DBusConnection *conn,
 static DBusMessage* snot_get_server_information(DBusMessage *msg);
 static DBusMessage* snot_notify(DBusMessage *msg, struct snot_fifo **fifo);
 static DBusMessage* snot_get_capabilities(DBusMessage *msg);
+static DBusMessage* snot_close_notification(DBusMessage *msg,
+        DBusConnection *conn, struct snot_fifo **fifo);
+static void snot_signal_notification_closed(DBusConnection* conn, int id, 
+        int reason);

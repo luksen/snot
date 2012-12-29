@@ -26,6 +26,22 @@ Example:
 
     snot -f "%a: _%s_ %b [%q]"
 
+# close Notification
+As per the Desktop Notification Specification it's possible to remove a
+notification from the queue by calling the DBus method CloseNotification, e.g.
+like this:
+
+    dbus-send --print-reply=literal --type=method_call \
+    --dest=org.freedesktop.Notifications \
+    /org/freedesktop/Notifications \
+    org.freedesktop.Notifications.CloseNotification \
+    int32:<id>
+
+Specifying 0 as id will close the head of the queue. This is an extension to the
+specification. This is useful for non-expiring notifications or notifications
+with a long timeout.
+
+
 # Capabilities
     name                planned     implemented
     -------------------------------------------
