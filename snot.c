@@ -13,6 +13,11 @@ const char *snot_capabilities[N_CAPS] = { "body" };
 static struct snot_config config;
 
 
+/*
+ *******************************************************************************
+ * general
+ *******************************************************************************
+ */
 void die(char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -73,6 +78,12 @@ static void snot_config_parse_cmd(int argc, char **argv) {
     }  
 }
 
+
+/*
+ *******************************************************************************
+ * fifo
+ *******************************************************************************
+ */
 static void snot_fifo_cut(struct snot_fifo **fifo) {
     if (snot_fifo_size(*fifo) > 0) {
         struct snot_fifo *tmp = (*fifo)->next;
@@ -149,6 +160,12 @@ static void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt) {
     fflush(stdout);
 }
 
+
+/*
+ *******************************************************************************
+ * dbus
+ *******************************************************************************
+ */
 static DBusHandlerResult snot_handler(DBusConnection *conn, DBusMessage *msg, 
         void *fifo ) {
     DBusMessage *reply;
@@ -306,32 +323,35 @@ int main(int args, char **argv) {
     struct timeval now;
     gettimeofday(&now, NULL);
     while (dbus_connection_read_write_dispatch(conn, block)) {
-        if (nots != NULL) {
-            gettimeofday(&now, NULL);
-            if (block == -1) {
+        if (!nots) continue;
+        gettimeofday(&now, NULL);
+        if (block == -1) {
+            // queue was empty
+            block = 1000;
+            gettimeofday(&expire, NULL);
+            timeval_add_msecs(&expire, nots->timeout);
+        }
+        else if (timeval_geq(now, expire)) {
+            // notification expired
+            snot_fifo_cut(&nots);
+            if (nots) {
                 block = 1000;
                 gettimeofday(&expire, NULL);
                 timeval_add_msecs(&expire, nots->timeout);
             }
-            else if (timeval_geq(now, expire)) {
-                snot_fifo_cut(&nots);
-                if (nots != NULL) {
-                    block = 1000;
-                    gettimeofday(&expire, NULL);
-                    timeval_add_msecs(&expire, nots->timeout);
-                }
-                else {
-                    block = -1;
-                    printf("\n");
-                    fflush(stdout);
-                    gettimeofday(&last_print, NULL);
-                }
-            }
-            now.tv_sec--;
-            if (timeval_geq(now, last_print)) {
-                snot_fifo_print_top(nots, config.format);
+            else {
+                // no new notification
+                block = -1;
+                printf("\n");
+                fflush(stdout);
                 gettimeofday(&last_print, NULL);
             }
+        }
+        // make sure the number of lines printed equals the timeout in seconds
+        now.tv_sec--;
+        if (timeval_geq(now, last_print)) {
+            snot_fifo_print_top(nots, config.format);
+            gettimeofday(&last_print, NULL);
         }
     }
     free(snot_handler_vt);
