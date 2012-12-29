@@ -6,7 +6,7 @@ DBUS = $(shell pkg-config --cflags --libs dbus-1)
 
 all: snot
 
-snot: snot.c
+snot: snot.c snot.h
 	${CC} ${CFLAGS} ${DBUS} $< -o $@
 
 install: snot
