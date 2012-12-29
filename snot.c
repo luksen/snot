@@ -109,6 +109,7 @@ static int snot_fifo_add(struct snot_fifo **fifo, char *app_name,
     strcpy(new->body, body);
     new->timeout = timeout;
     if (timeout == -1) new->timeout = config.timeout;
+    if (timeout == 0) new->timeout = -1;
     new->next = NULL;
     if (*fifo == NULL) {
         *fifo = new;
@@ -405,7 +406,7 @@ int main(int args, char **argv) {
             gettimeofday(&expire, NULL);
             timeval_add_msecs(&expire, nots->timeout);
         }
-        else if (timeval_geq(now, expire)) {
+        else if (timeval_geq(now, expire) && nots->timeout > -1) {
             // notification expired
             int id = snot_fifo_cut(&nots);
             snot_signal_notification_closed(conn, id, 1);
