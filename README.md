@@ -1,15 +1,15 @@
-## snot - simple notification
+# snot - simple notification
 
-Text based notification server for libnotify. 
+Text based notification server for libnotify directly based on libdbus.
 
-# Options
+## Options
 
 `-t or --timeout` Overwrite the standard timeout for notifications without 
     specified timeout
 
 `-f or --format` Define the output format as described in the next paragraph.
 
-# Format
+## Format
 
 Snot allows you to define the output string on the command line. The following
 substitutions are done:
@@ -26,7 +26,7 @@ Example:
 
     snot -f "%a: _%s_ %b [%q]"
 
-# close Notification
+## close Notification
 As per the Desktop Notification Specification it's possible to remove a
 notification from the queue by calling the DBus method CloseNotification, e.g.
 like this:
@@ -42,11 +42,11 @@ specification. This is useful for non-expiring notifications or notifications
 with a long timeout.
 
 
-# Capabilities
+## Capabilities
     name                planned     implemented
     -------------------------------------------
     "action-icons"      no          no
-    "actions"           yes         no
+    "actions"           maybe       no
     "body"              yes         yes
     "body-hyperlinks"   no          no
     "body-images"       no          no
@@ -54,4 +54,4 @@ with a long timeout.
     "icon-multi"        no          no
     "icon-static"       no          no
     "persistence"       maybe       no
-    "sound"             maybe       no
+    "sound"             maybe       no          (through external program call)
