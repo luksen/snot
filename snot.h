@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <dbus/dbus.h>
+#include <errno.h>
 
 
 /*
@@ -26,6 +27,11 @@ struct snot_fifo{
     struct snot_fifo *next;
 };
 
+
+/*
+ * print error message and exit
+ */
+void die(char *fmt, ...);
 
 /*
  * unique IDs

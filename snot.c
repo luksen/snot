@@ -13,6 +13,20 @@ const char *snot_capabilities[N_CAPS] = { "body" };
 static struct snot_config config;
 
 
+void die(char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    fprintf(stderr, fmt, args);
+    va_end(args);
+    if (errno) {
+        fprintf(stderr, ":\n    ");
+        perror(NULL);
+    }
+    else fprintf(stderr, "\n");
+    fflush(stderr);
+    exit(1);
+}
+
 static int snot_id() {
     static int id = 1;
     return ++id;
@@ -164,25 +178,15 @@ static DBusMessage* snot_get_server_information(DBusMessage *msg) {
     // compose reply
     reply = dbus_message_new_method_return(msg);
     dbus_message_iter_init_append(reply, &args);
-    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &snot_name)) { 
-        fprintf(stderr, "Out Of Memory!\n"); 
-        exit(1);
-    }
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &snot_name))
+        die("Could not prepare reply in %s", __func__);
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &snot_vendor))
+        die("Could not prepare reply in %s", __func__);
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &snot_version))
+        die("Could not prepare reply in %s", __func__);
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, 
-                &snot_vendor)) { 
-        fprintf(stderr, "Out Of Memory!\n"); 
-        exit(1);
-    }
-    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, 
-                &snot_version)) { 
-        fprintf(stderr, "Out Of Memory!\n"); 
-        exit(1);
-    }
-    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, 
-                &snot_spec_version)) { 
-        fprintf(stderr, "Out Of Memory!\n"); 
-        exit(1);
-    }
+                &snot_spec_version))
+        die("Could not prepare reply in %s", __func__);
 
     return reply;
 }
@@ -221,10 +225,8 @@ static DBusMessage* snot_notify(DBusMessage *msg, struct snot_fifo **fifo) {
     // compose reply
     reply = dbus_message_new_method_return(msg);
     dbus_message_iter_init_append(reply, &args);
-    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT32, &return_id)) { 
-        fprintf(stderr, "Out Of Memory!\n"); 
-        exit(1);
-    }
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT32, &return_id))
+        die("Could not prepare reply in %s", __func__);
 
     return reply;
 }
@@ -240,7 +242,9 @@ static DBusMessage* snot_get_capabilities(DBusMessage *msg) {
     dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "s", &cap_array);
     // set up array
     for (int i = N_CAPS; i-->0;) {
-        dbus_message_iter_append_basic(&cap_array, DBUS_TYPE_STRING, &snot_capabilities[0]);
+        if(!dbus_message_iter_append_basic(&cap_array, DBUS_TYPE_STRING, 
+                    &snot_capabilities[0]))
+            die("Could not prepare reply in %s", __func__);
     }
     
 
@@ -277,9 +281,8 @@ int main(int args, char **argv) {
         fprintf(stderr, "Connection Error (%s)\n", err.message); 
         dbus_error_free(&err); 
     }
-    if (conn == NULL) { 
-        exit(1); 
-    }
+    if (conn == NULL)
+        die("Can't connect to the message bus");
 
     // request name on the bus
     int ret;
@@ -289,9 +292,8 @@ int main(int args, char **argv) {
         fprintf(stderr, "Name Error (%s)\n", err.message); 
         dbus_error_free(&err); 
     }
-    if (ret != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER) { 
-        exit(1);
-    }
+    if (ret != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER)
+        die("Another notification daemon seems to be running");
 
     // run incoming method calls through the handler
     dbus_connection_register_object_path(conn, "/org/freedesktop/Notifications",
