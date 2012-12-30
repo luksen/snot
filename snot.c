@@ -55,6 +55,7 @@ static void snot_config_init() {
     config.timeout = 3000;
     config.format = malloc(18);
     strcpy(config.format, "[%a] %s: %b [%q]");
+    config.single = 0;
 }
 
 static void snot_config_parse_cmd(int argc, char **argv) {
@@ -73,6 +74,9 @@ static void snot_config_parse_cmd(int argc, char **argv) {
                 config.format = malloc(len + 1);
                 sscanf(argv[i], fmt, config.format);
                 config.format[len] = '\0';
+            }
+            else if ((argv[i][1] == '1') || (!strcmp(argv[i], "--single"))) {
+                config.single = 1;
             }
         }
     }  
@@ -399,6 +403,11 @@ int main(int args, char **argv) {
     gettimeofday(&now, NULL);
     while (dbus_connection_read_write_dispatch(conn, block)) {
         if (!nots) continue;
+        if (config.single) {
+            snot_fifo_print_top(nots, config.format);
+            snot_fifo_cut(&nots);
+            continue;
+        }
         gettimeofday(&now, NULL);
         if (block == -1) {
             // queue was empty

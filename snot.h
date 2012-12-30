@@ -13,6 +13,7 @@
 struct snot_config {
     int timeout;
     char *format;
+    int single;
 };
 
 /*
