@@ -1,6 +1,9 @@
 # snot - simple notification
 
-Text based notification server for libnotify directly based on libdbus.
+Text based notification server for libnotify directly based on libdbus. 
+
+See [Todo](#todo) and below for information on the current limits of this
+implementation.
 
 ## Options
 
@@ -40,6 +43,12 @@ like this:
 Specifying 0 as id will close the head of the queue. This is an extension to the
 specification. This is useful for non-expiring notifications or notifications
 with a long timeout.
+
+## Todo
+
+ - handle markup one way or the other
+ - honor replaces\_ip
+ - handle urgency levels
 
 
 ## Capabilities
