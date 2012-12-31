@@ -12,6 +12,8 @@ implementation.
 
 `-f or --format` Define the output format as described in the next paragraph.
 
+`-r or --raw` Don't remove markup.
+
 ## Format
 
 Snot allows you to define the output string on the command line. The following
@@ -46,7 +48,6 @@ with a long timeout.
 
 ## Todo
 
- - handle markup one way or the other
  - honor replaces\_ip
  - handle urgency levels
 

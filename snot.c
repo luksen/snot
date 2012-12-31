@@ -51,6 +51,24 @@ void die(char *fmt, ...) {
     exit(1);
 }
 
+static void remove_markup(char *string) {
+    int lshift = 0;
+    for (int i = 0; i < strlen(string); i++) {
+        if (string[i] == '<')
+            lshift = 1;
+        if (lshift) {
+            if (string[i] == '>') {
+                memcpy(string + i - lshift + 1, string + i + 1,
+                        strlen(string + i + 1) + 1);
+                i -= lshift;
+                lshift = 0;
+            }
+            else lshift++;
+            continue;
+        }
+    }
+}
+
 static int snot_id() {
     static int id = 1;
     return ++id;
@@ -75,6 +93,7 @@ static void snot_config_init() {
     config.format = malloc(18);
     strcpy(config.format, "[%a] %s: %b [%q]");
     config.single = 0;
+    config.raw = 0;
 }
 
 static void snot_config_parse_cmd(int argc, char **argv) {
@@ -96,6 +115,9 @@ static void snot_config_parse_cmd(int argc, char **argv) {
             }
             else if ((argv[i][1] == '1') || (!strcmp(argv[i], "--single"))) {
                 config.single = 1;
+            }
+            else if ((argv[i][1] == 'r') || (!strcmp(argv[i], "--raw"))) {
+                config.raw = 1;
             }
         }
     }  
@@ -126,6 +148,8 @@ static int snot_fifo_add(struct snot_fifo **fifo, char *app_name,
     new->id = snot_id();
     new->app_name = malloc(strlen(app_name) + 1);
     new->summary = malloc(strlen(summary) + 1);
+    if (!config.raw)
+        remove_markup(body);
     new->body = malloc(strlen(body) + 1);
     strcpy(new->app_name, app_name);
     strcpy(new->summary, summary);
