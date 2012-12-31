@@ -27,9 +27,11 @@ substitutions are done:
 
 `%q` size of queue (not yet displayed notifications)
 
+`%(x...)` only display ... if x evaluates to true; x may be one of the above
+
 Example:
 
-    snot -f "%a: _%s_ %b [%q]"
+    snot -f "%a: _%s_ %b %(qyou have %q more notifications)"
 
 ## close Notification
 As per the Desktop Notification Specification it's possible to remove a

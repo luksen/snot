@@ -91,7 +91,7 @@ static int timeval_geq(struct timeval this, struct timeval other) {
 static void snot_config_init() {
     config.timeout = 3000;
     config.format = malloc(18);
-    strcpy(config.format, "[%a] %s: %b [%q]");
+    strcpy(config.format, "[%a] %s%(b: %b) %(q+%q)");
     config.single = 0;
     config.raw = 0;
 }
@@ -207,8 +207,27 @@ static int snot_fifo_size(struct snot_fifo *fifo) {
 static void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt) {
     if (fifo != NULL) {
         char c;
+        char cond = '\0';
         for (int i = 0; i < strlen(fmt); i++)  {
             c = fmt[i];
+            if (cond && c == ')' && fmt[i - 1] != '%') {
+                cond = '\0';
+                continue;
+            }
+            switch (cond) {
+                case 'a':
+                    if (!fifo->app_name[0]) continue;
+                    break;
+                case 's':
+                    if (!fifo->summary[0]) continue;
+                    break;
+                case 'b':
+                    if (!fifo->body[0]) continue;
+                    break;
+                case 'q':
+                    if (!(snot_fifo_size(fifo) - 1)) continue;
+                    break;
+            }
             if (c == '%') {
                 i++;
                 c = fmt[i];
@@ -223,8 +242,15 @@ static void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt) {
                         printf("%s", fifo->body);
                         break;
                     case 'q':
-                        printf("%d", snot_fifo_size(fifo));
+                        printf("%d", snot_fifo_size(fifo) - 1);
                         break;
+                    case '(':
+                        cond = fmt[++i];
+                        break;
+                    default:
+                        putchar(c);
+                        continue;
+
                 }
             }
             else putchar(c);
