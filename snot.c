@@ -37,7 +37,7 @@ static struct snot_config config;
  * general
  *******************************************************************************
  */
-void die(char *fmt, ...) {
+static void die(char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
     fprintf(stderr, fmt, args);

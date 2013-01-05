@@ -52,7 +52,7 @@ struct snot_fifo{
 /*
  * print error message and exit
  */
-void die(char *fmt, ...);
+static void die(char *fmt, ...);
 
 /*
  * unique IDs
