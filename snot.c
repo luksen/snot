@@ -21,8 +21,8 @@
 
 // server information
 const char *snot_name = "Snot";
-const char *snot_vendor = "sleunk";
-const char *snot_version = "0.01";
+const char *snot_vendor = "luksen";
+const char *snot_version = "0.02";
 const char *snot_spec_version = "1.2";
 // server capabilities
 #define N_CAPS 1
@@ -49,6 +49,12 @@ void die(char *fmt, ...) {
     else fprintf(stderr, "\n");
     fflush(stderr);
     exit(1);
+}
+
+static void snot_print_version() {
+    printf("Simple notification daemon version %s\n", snot_version);
+    printf("Desktop Notifications Specification version %s\n", snot_spec_version);
+    exit(EXIT_SUCCESS);
 }
 
 static void remove_markup(char *string) {
@@ -118,6 +124,9 @@ static void snot_config_parse_cmd(int argc, char **argv) {
             }
             else if ((argv[i][1] == 'r') || (!strcmp(argv[i], "--raw"))) {
                 config.raw = 1;
+            }
+            else if ((argv[i][1] == 'v') || (!strcmp(argv[i], "--version"))) {
+                snot_print_version();
             }
         }
     }  
@@ -425,8 +434,10 @@ static void snot_signal_notification_closed(DBusConnection* conn, int id, int re
  *******************************************************************************
  */
 int main(int args, char **argv) {
+    // setup config
     snot_config_init();
     snot_config_parse_cmd(args, argv);
+
     // initialise local message buffer
     struct snot_fifo *nots;
     nots = NULL;
