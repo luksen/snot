@@ -14,6 +14,8 @@ implementation.
 
 `-r or --raw` Don't remove markup.
 
+`-v or --version` Print version information and exit.
+
 ## Format
 
 Snot allows you to define the output string on the command line. The following
