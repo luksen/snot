@@ -39,8 +39,8 @@ static struct snot_config config;
  */
 static void die(char *fmt, ...) {
     va_list args;
-    va_start(args, fmt);
-    fprintf(stderr, fmt, args);
+    va_start(args,fmt);
+    vfprintf(stderr, fmt, args);
     va_end(args);
     if (errno) {
         fprintf(stderr, ":\n    ");
@@ -106,10 +106,15 @@ static void snot_config_parse_cmd(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {
             if ((argv[i][1] == 't') || (!strcmp(argv[i], "--timeout"))) {
+                if (i == argc - 1)
+                    die("Missing argument: %s", argv[i]);
                 i++;
-                sscanf(argv[i], "%d", &config.timeout);
+                if (!sscanf(argv[i], "%d", &config.timeout))
+                    die("Timeout must be given in milliseconds");
             }
             else if ((argv[i][1] == 'f') || (!strcmp(argv[i], "--format"))) {
+                if (i == argc - 1)
+                    die("Missing argument: %s", argv[i]);
                 i++;
                 free(config.format);
                 char fmt[6];
@@ -128,6 +133,15 @@ static void snot_config_parse_cmd(int argc, char **argv) {
             else if ((argv[i][1] == 'v') || (!strcmp(argv[i], "--version"))) {
                 snot_print_version();
             }
+            else if ((argv[i][1] != '-') && (argv[i][2] != '\0')) {
+                die("Short options may not be concatenated: %s", argv[i]);
+            }
+            else {
+                die("Unknown option: %s", argv[i]);
+            }
+        }
+        else {
+            die("Argument without an option: %s", argv[i]);
         }
     }  
 }
