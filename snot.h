@@ -27,6 +27,15 @@
 
 
 /*
+ * config defaults
+ */
+#define DEF_TIMEOUT 3000
+#define DEF_FORMAT "[%a] %s%(b: %b) %(q+%q)"
+#define DEF_SINGLE 0
+#define DEF_RAW 0
+
+
+/*
  * global configuration with defaults
  */
 struct snot_config {

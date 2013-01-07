@@ -95,11 +95,11 @@ static int timeval_geq(struct timeval this, struct timeval other) {
 }
 
 static void snot_config_init() {
-    config.timeout = 3000;
-    config.format = malloc(18);
-    strcpy(config.format, "[%a] %s%(b: %b) %(q+%q)");
-    config.single = 0;
-    config.raw = 0;
+    config.timeout = DEF_TIMEOUT;
+    config.format = malloc(strlen(DEF_FORMAT) + 1);
+    strcpy(config.format, DEF_FORMAT);
+    config.single = DEF_SINGLE;
+    config.raw = DEF_RAW;
 }
 
 static void snot_config_parse_cmd(int argc, char **argv) {
