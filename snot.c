@@ -75,6 +75,11 @@ static void remove_markup(char *string) {
     }
 }
 
+static void remove_special(char *string) {
+    for (char *c = string; *c != '\0'; c++)
+        if (*c < 32 || *c == 127) *c = ' ';
+}
+
 static int snot_id() {
     static int id = 1;
     return ++id;
@@ -171,8 +176,10 @@ static int snot_fifo_add(struct snot_fifo **fifo, char *app_name,
     new->id = snot_id();
     new->app_name = malloc(strlen(app_name) + 1);
     new->summary = malloc(strlen(summary) + 1);
-    if (!config.raw)
+    if (!config.raw) {
         remove_markup(body);
+        remove_special(body);
+    }
     new->body = malloc(strlen(body) + 1);
     strcpy(new->app_name, app_name);
     strcpy(new->summary, summary);
