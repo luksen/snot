@@ -454,6 +454,7 @@ static void snot_signal_notification_closed(DBusConnection* conn, int id, int re
  * main
  *******************************************************************************
  */
+#ifndef TESTING
 int main(int args, char **argv) {
     // setup config
     snot_config_init();
@@ -542,3 +543,4 @@ int main(int args, char **argv) {
     }
     free(snot_handler_vt);
 }
+#endif

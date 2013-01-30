@@ -14,3 +14,6 @@ install: snot
 
 clean:
 	-rm snot
+
+test: test.c snot.h snot.c
+	${CC} -std=c99 ${DBUS} $< -o $@
