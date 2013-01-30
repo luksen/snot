@@ -60,12 +60,12 @@ static void snot_print_version() {
 static void remove_markup(char *string) {
     int lshift = 0;
     for (int i = 0; i < strlen(string); i++) {
-        if (string[i] == '<')
+        if (string[i] == '<' && !lshift)
             lshift = 1;
         if (lshift) {
             if (string[i] == '>') {
-                memcpy(string + i - lshift + 1, string + i + 1,
-                        strlen(string + i + 1) + 1);
+                memmove(string + i - lshift + 1, string + i + 1,
+                        strlen(string + i));
                 i -= lshift;
                 lshift = 0;
             }
