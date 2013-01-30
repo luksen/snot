@@ -64,6 +64,12 @@ struct snot_fifo{
 static void die(char *fmt, ...);
 
 /*
+ * clean up user input
+ */
+static void remove_markup(char *string);
+static void remove_special(char *string);
+
+/*
  * unique IDs
  */
 static int snot_id();
@@ -104,3 +110,8 @@ static DBusMessage* snot_close_notification(DBusMessage *msg,
         DBusConnection *conn, struct snot_fifo **fifo);
 static void snot_signal_notification_closed(DBusConnection* conn, int id, 
         int reason);
+
+/*
+ * others
+ */
+static void snot_print_version();
