@@ -317,7 +317,8 @@ static DBusHandlerResult bus_handler(DBusConnection *conn, DBusMessage *msg,
         reply = bus_close_notification(msg, conn, fifo);
         dbus_connection_send(conn, reply, NULL);
     }
-    dbus_message_unref(reply);
+    if (reply)
+        dbus_message_unref(reply);
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
@@ -329,14 +330,14 @@ static DBusMessage* bus_get_server_information(DBusMessage *msg) {
     reply = dbus_message_new_method_return(msg);
     dbus_message_iter_init_append(reply, &args);
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &snot_name))
-        die("Could not prepare reply in %s", __func__);
+        return NULL;
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &snot_vendor))
-        die("Could not prepare reply in %s", __func__);
+        return NULL;
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &snot_version))
-        die("Could not prepare reply in %s", __func__);
+        return NULL;
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, 
                 &snot_spec_version))
-        die("Could not prepare reply in %s", __func__);
+        return NULL;
 
     return reply;
 }
@@ -377,7 +378,7 @@ static DBusMessage* bus_notify(DBusMessage *msg, struct fifo **fifo) {
     reply = dbus_message_new_method_return(msg);
     dbus_message_iter_init_append(reply, &args);
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT32, &return_id))
-        die("Could not prepare reply in %s", __func__);
+        return NULL;
 
     return reply;
 }
@@ -395,10 +396,8 @@ static DBusMessage* bus_get_capabilities(DBusMessage *msg) {
     for (int i = N_CAPS; i-->0;) {
         if(!dbus_message_iter_append_basic(&cap_array, DBUS_TYPE_STRING, 
                     &snot_capabilities[0]))
-            die("Could not prepare reply in %s", __func__);
+            return NULL;
     }
-    
-
     dbus_message_iter_close_container(&args, &cap_array);
 
     return reply;
@@ -432,18 +431,17 @@ static void bus_signal_notification_closed(DBusConnection* conn, int id, int rea
     msg = dbus_message_new_signal("/org/freedesktop/Notifications",
             "org.freedesktop.Notifications",
             "NotificationClosed");
-    if (!msg) die("Could not prepare signal message in %s", __func__);
+    if (!msg) return;
 
     // append arguments onto signal
     dbus_message_iter_init_append(msg, &args);
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT32, &id))
-        die("Could not append argument to signal in %s", __func__);
+        return;
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT32, &reason))
-        die("Could not append argument to signal in %s", __func__);
+        return;
 
     // send the message
-    if (!dbus_connection_send(conn, msg, NULL))
-        die("Sending signal failed in %s", __func__);
+    dbus_connection_send(conn, msg, NULL);
     dbus_message_unref(msg);
 }
 
