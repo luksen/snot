@@ -318,7 +318,6 @@ static DBusHandlerResult bus_handler(DBusConnection *conn, DBusMessage *msg,
         dbus_connection_send(conn, reply, NULL);
     }
     dbus_message_unref(reply);
-    dbus_connection_flush(conn);
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
@@ -442,10 +441,10 @@ static void bus_signal_notification_closed(DBusConnection* conn, int id, int rea
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT32, &reason))
         die("Could not append argument to signal in %s", __func__);
 
-    // send the message and flush the connection
+    // send the message
     if (!dbus_connection_send(conn, msg, NULL))
         die("Sending signal failed in %s", __func__);
-    dbus_connection_flush(conn);
+    dbus_message_unref(msg);
 }
 
 
