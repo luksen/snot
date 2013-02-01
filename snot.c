@@ -29,7 +29,7 @@ const char *snot_spec_version = "1.2";
 const char *snot_capabilities[N_CAPS] = { "body" };
 
 
-static struct snot_config config;
+static struct config config;
 
 
 /*
@@ -51,7 +51,7 @@ static void die(char *fmt, ...) {
     exit(1);
 }
 
-static void snot_print_version() {
+static void print_version() {
     printf("Simple notification daemon version %s\n", snot_version);
     printf("Desktop Notifications Specification version %s\n", snot_spec_version);
     exit(EXIT_SUCCESS);
@@ -80,7 +80,7 @@ static void remove_special(char *string) {
         if (*c < 32 || *c == 127) *c = ' ';
 }
 
-static int snot_id() {
+static int next_id() {
     static int id = 1;
     return ++id;
 }
@@ -99,7 +99,7 @@ static int timeval_geq(struct timeval this, struct timeval other) {
     return 0;
 }
 
-static void snot_config_init() {
+static void config_init() {
     config.timeout = DEF_TIMEOUT;
     config.format = malloc(strlen(DEF_FORMAT) + 1);
     strcpy(config.format, DEF_FORMAT);
@@ -107,7 +107,7 @@ static void snot_config_init() {
     config.raw = DEF_RAW;
 }
 
-static void snot_config_parse_cmd(int argc, char **argv) {
+static void config_parse_cmd(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {
             if ((argv[i][1] == 't') || (!strcmp(argv[i], "--timeout"))) {
@@ -136,7 +136,7 @@ static void snot_config_parse_cmd(int argc, char **argv) {
                 config.raw = 1;
             }
             else if ((argv[i][1] == 'v') || (!strcmp(argv[i], "--version"))) {
-                snot_print_version();
+                print_version();
             }
             else if ((argv[i][1] != '-') && (argv[i][2] != '\0')) {
                 die("Short options may not be concatenated: %s", argv[i]);
@@ -157,10 +157,10 @@ static void snot_config_parse_cmd(int argc, char **argv) {
  * fifo
  *******************************************************************************
  */
-static int snot_fifo_cut(struct snot_fifo **fifo) {
+static int fifo_cut(struct fifo **fifo) {
     int id = (*fifo)->id;
-    if (snot_fifo_size(*fifo) > 0) {
-        struct snot_fifo *tmp = (*fifo)->next;
+    if (fifo_size(*fifo) > 0) {
+        struct fifo *tmp = (*fifo)->next;
         free((*fifo)->app_name);
         free((*fifo)->summary);
         free((*fifo)->body);
@@ -170,10 +170,10 @@ static int snot_fifo_cut(struct snot_fifo **fifo) {
     return id;
 }
 
-static int snot_fifo_add(struct snot_fifo **fifo, char *app_name, 
+static int fifo_add(struct fifo **fifo, char *app_name, 
         char *summary, char *body, int timeout) {
-    struct snot_fifo *new = malloc(sizeof(struct snot_fifo));
-    new->id = snot_id();
+    struct fifo *new = malloc(sizeof(struct fifo));
+    new->id = next_id();
     new->app_name = malloc(strlen(app_name) + 1);
     new->summary = malloc(strlen(summary) + 1);
     if (!config.raw) {
@@ -192,7 +192,7 @@ static int snot_fifo_add(struct snot_fifo **fifo, char *app_name,
         *fifo = new;
     } 
     else {
-        struct snot_fifo *tmp = *fifo;
+        struct fifo *tmp = *fifo;
         while (tmp->next != NULL) {
             tmp = tmp->next;
         }
@@ -201,8 +201,8 @@ static int snot_fifo_add(struct snot_fifo **fifo, char *app_name,
     return new->id;
 }
 
-static int snot_fifo_remove(struct snot_fifo **fifo, int id) {
-    struct snot_fifo *tmp = *fifo;
+static int fifo_remove(struct fifo **fifo, int id) {
+    struct fifo *tmp = *fifo;
     int removed_sth = 0;
     while (tmp) {
         if (tmp->id == id || !id) {
@@ -211,7 +211,7 @@ static int snot_fifo_remove(struct snot_fifo **fifo, int id) {
             break;
         }
         if (tmp->next && tmp->next->id == id) {
-            struct snot_fifo* save= tmp->next;
+            struct fifo* save= tmp->next;
             tmp->next = tmp->next->next;
             free(save->app_name);
             free(save->summary);
@@ -225,7 +225,7 @@ static int snot_fifo_remove(struct snot_fifo **fifo, int id) {
     return removed_sth;
 }
 
-static int snot_fifo_size(struct snot_fifo *fifo) {
+static int fifo_size(struct fifo *fifo) {
     int size = 0;
     while (fifo != NULL) {
         fifo = fifo->next;
@@ -234,7 +234,7 @@ static int snot_fifo_size(struct snot_fifo *fifo) {
     return size;
 }
 
-static void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt) {
+static void fifo_print_top(struct fifo *fifo, const char *fmt) {
     if (fifo != NULL) {
         char c;
         char cond = '\0';
@@ -255,7 +255,7 @@ static void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt) {
                     if (!fifo->body[0]) continue;
                     break;
                 case 'q':
-                    if (!(snot_fifo_size(fifo) - 1)) continue;
+                    if (!(fifo_size(fifo) - 1)) continue;
                     break;
             }
             if (c == '%') {
@@ -272,7 +272,7 @@ static void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt) {
                         printf("%s", fifo->body);
                         break;
                     case 'q':
-                        printf("%d", snot_fifo_size(fifo) - 1);
+                        printf("%d", fifo_size(fifo) - 1);
                         break;
                     case '(':
                         cond = fmt[++i];
@@ -296,25 +296,25 @@ static void snot_fifo_print_top(struct snot_fifo *fifo, const char *fmt) {
  * dbus
  *******************************************************************************
  */
-static DBusHandlerResult snot_handler(DBusConnection *conn, DBusMessage *msg, 
+static DBusHandlerResult bus_handler(DBusConnection *conn, DBusMessage *msg, 
         void *fifo ) {
     DBusMessage *reply;
     const char *member = dbus_message_get_member(msg);
     //printf("handler %s\n", member);
     if (strcmp(member, "GetServerInformation") == 0) {
-        reply = snot_get_server_information(msg);
+        reply = bus_get_server_information(msg);
         dbus_connection_send(conn, reply, NULL);
     }
     else if (strcmp(member, "Notify") == 0) {
-        reply = snot_notify(msg, fifo);
+        reply = bus_notify(msg, fifo);
         dbus_connection_send(conn, reply, NULL);
     }
     else if (strcmp(member, "GetCapabilities") == 0) {
-        reply = snot_get_capabilities(msg);
+        reply = bus_get_capabilities(msg);
         dbus_connection_send(conn, reply, NULL);
     }
     else if (strcmp(member, "CloseNotification") == 0) {
-        reply = snot_close_notification(msg, conn, fifo);
+        reply = bus_close_notification(msg, conn, fifo);
         dbus_connection_send(conn, reply, NULL);
     }
     dbus_message_unref(reply);
@@ -322,7 +322,7 @@ static DBusHandlerResult snot_handler(DBusConnection *conn, DBusMessage *msg,
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-static DBusMessage* snot_get_server_information(DBusMessage *msg) {
+static DBusMessage* bus_get_server_information(DBusMessage *msg) {
     DBusMessage *reply;
     DBusMessageIter args;
 
@@ -342,7 +342,7 @@ static DBusMessage* snot_get_server_information(DBusMessage *msg) {
     return reply;
 }
 
-static DBusMessage* snot_notify(DBusMessage *msg, struct snot_fifo **fifo) {
+static DBusMessage* bus_notify(DBusMessage *msg, struct fifo **fifo) {
     DBusMessage *reply;
     DBusMessageIter args;
     char *app_name;
@@ -372,7 +372,7 @@ static DBusMessage* snot_notify(DBusMessage *msg, struct snot_fifo **fifo) {
         // skip hints
         dbus_message_iter_next(&args);
         dbus_message_iter_get_basic(&args, &timeout);
-        return_id = snot_fifo_add(fifo, app_name, summary, body, timeout);
+        return_id = fifo_add(fifo, app_name, summary, body, timeout);
     
     // compose reply
     reply = dbus_message_new_method_return(msg);
@@ -383,7 +383,7 @@ static DBusMessage* snot_notify(DBusMessage *msg, struct snot_fifo **fifo) {
     return reply;
 }
 
-static DBusMessage* snot_get_capabilities(DBusMessage *msg) {
+static DBusMessage* bus_get_capabilities(DBusMessage *msg) {
     DBusMessage *reply;
     DBusMessageIter args;
     DBusMessageIter cap_array;
@@ -405,8 +405,8 @@ static DBusMessage* snot_get_capabilities(DBusMessage *msg) {
     return reply;
 }
 
-static DBusMessage* snot_close_notification(DBusMessage *msg,
-        DBusConnection *conn, struct snot_fifo **fifo) {
+static DBusMessage* bus_close_notification(DBusMessage *msg,
+        DBusConnection *conn, struct fifo **fifo) {
     DBusMessage *reply;
     DBusMessageIter args;
     int id;
@@ -414,19 +414,19 @@ static DBusMessage* snot_close_notification(DBusMessage *msg,
     // read the arguments
     dbus_message_iter_init(msg, &args);
     dbus_message_iter_get_basic(&args, &id);
-    int removed_sth = snot_fifo_remove(fifo, id);
+    int removed_sth = fifo_remove(fifo, id);
     
     // compose reply
     if (removed_sth) {
         reply = dbus_message_new_method_return(msg);
-        snot_signal_notification_closed(conn, id, 3);
+        bus_signal_notification_closed(conn, id, 3);
     }
     else
         reply = dbus_message_new_error(msg, DBUS_ERROR_FAILED, NULL);
     return reply;
 }
 
-static void snot_signal_notification_closed(DBusConnection* conn, int id, int reason) {
+static void bus_signal_notification_closed(DBusConnection* conn, int id, int reason) {
     DBusMessageIter args;
     DBusMessage* msg;
     // create a signal & check for errors 
@@ -456,19 +456,19 @@ static void snot_signal_notification_closed(DBusConnection* conn, int id, int re
  */
 int main(int args, char **argv) {
     // setup config
-    snot_config_init();
-    snot_config_parse_cmd(args, argv);
+    config_init();
+    config_parse_cmd(args, argv);
 
     // initialise local message buffer
-    struct snot_fifo *nots;
+    struct fifo *nots;
     nots = NULL;
     // essential dbus vars
     DBusError err;
     DBusConnection* conn;
-    // wrap snot_handler in vtable
-    DBusObjectPathVTable *snot_handler_vt = 
+    // wrap bus_handler in vtable
+    DBusObjectPathVTable *bus_handler_vt = 
         malloc(sizeof(DBusObjectPathVTable));
-    snot_handler_vt->message_function = &snot_handler;
+    bus_handler_vt->message_function = &bus_handler;
     // initialise the errors
     dbus_error_init(&err);
 
@@ -494,7 +494,7 @@ int main(int args, char **argv) {
 
     // run incoming method calls through the handler
     dbus_connection_register_object_path(conn, "/org/freedesktop/Notifications",
-            snot_handler_vt, &nots);
+            bus_handler_vt, &nots);
     int block = -1;
     struct timeval expire;
     gettimeofday(&expire, NULL);
@@ -505,8 +505,8 @@ int main(int args, char **argv) {
     while (dbus_connection_read_write_dispatch(conn, block)) {
         if (!nots) continue;
         if (config.single) {
-            snot_fifo_print_top(nots, config.format);
-            snot_fifo_cut(&nots);
+            fifo_print_top(nots, config.format);
+            fifo_cut(&nots);
             continue;
         }
         gettimeofday(&now, NULL);
@@ -518,8 +518,8 @@ int main(int args, char **argv) {
         }
         else if (timeval_geq(now, expire) && nots->timeout > -1) {
             // notification expired
-            int id = snot_fifo_cut(&nots);
-            snot_signal_notification_closed(conn, id, 1);
+            int id = fifo_cut(&nots);
+            bus_signal_notification_closed(conn, id, 1);
             if (nots) {
                 block = 1000;
                 gettimeofday(&expire, NULL);
@@ -536,9 +536,9 @@ int main(int args, char **argv) {
         // make sure the number of lines printed equals the timeout in seconds
         now.tv_sec--;
         if (timeval_geq(now, last_print)) {
-            snot_fifo_print_top(nots, config.format);
+            fifo_print_top(nots, config.format);
             gettimeofday(&last_print, NULL);
         }
     }
-    free(snot_handler_vt);
+    free(bus_handler_vt);
 }
