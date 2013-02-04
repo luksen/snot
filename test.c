@@ -65,23 +65,23 @@ static void test_remove_special() {
     assert(exitcode == -1);
 }
 
-static void test_snot_id() {
+static void test_next_id() {
     exitcode = -1;
 
-    int id = snot_id();
-    int id2 = snot_id();
+    int id = next_id();
+    int id2 = next_id();
     assert(id2 > id);
-    id = snot_id();
+    id = next_id();
     assert(id2 < id);
 
     assert(exitcode == -1);
 }
 
-static void test_snot_config_parse_cmd() {
+static void test_config_parse_cmd() {
     exitcode = -1;
-    snot_config_init();
+    config_init();
     char *argv1[7] = {"foo", "-r", "-1", "-f", "%a->%s", "-t", "5000"};
-    snot_config_parse_cmd(7, argv1);
+    config_parse_cmd(7, argv1);
     assert(config.raw);
     assert(config.single);
     assert(config.timeout == 5000);
@@ -89,9 +89,9 @@ static void test_snot_config_parse_cmd() {
     assert(exitcode == -1);
 
     exitcode = -1;
-    snot_config_init();
+    config_init();
     char *argv2[7] = {"foo", "--format", "%a->%s", "--raw", "--single", "--timeout", "5000"};
-    snot_config_parse_cmd(7, argv2);
+    config_parse_cmd(7, argv2);
     assert(config.raw);
     assert(config.single);
     assert(config.timeout == 5000);
@@ -99,27 +99,27 @@ static void test_snot_config_parse_cmd() {
     assert(exitcode == -1);
 
     exitcode = -1;
-    snot_config_init();
+    config_init();
     char *argv3[2] = {"foo", "-v"};
-    snot_config_parse_cmd(2, argv3);
+    config_parse_cmd(2, argv3);
     assert(exitcode == 0);
 
     exitcode = -1;
-    snot_config_init();
+    config_init();
     char *argv4[2] = {"foo", "-f"};
-    snot_config_parse_cmd(2, argv4);
+    config_parse_cmd(2, argv4);
     assert(exitcode == 1);
 
     exitcode = -1;
-    snot_config_init();
+    config_init();
     char *argv5[3] = {"foo", "-t", "-r"};
-    snot_config_parse_cmd(3, argv5);
+    config_parse_cmd(3, argv5);
     assert(exitcode == 1);
 
     exitcode = -1;
-    snot_config_init();
+    config_init();
     char *argv6[3] = {"foo", "-t", "-1"};
-    snot_config_parse_cmd(3, argv6);
+    config_parse_cmd(3, argv6);
     assert(exitcode == 1);
 }
 
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
     test_die();
     test_remove_markup();
     test_remove_special();
-    test_snot_id();
-    test_snot_config_parse_cmd();
+    test_next_id();
+    test_config_parse_cmd();
     return EXIT_SUCCESS;
 }
