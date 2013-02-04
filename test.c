@@ -6,16 +6,6 @@ static int exitcode = -1;
 #undef exit
 
 
-#define BUFSIZE 100
-
-
-static int compare_string(const char *a, const char *b) {
-    if (strcmp(a, b)) {
-        printf("expected %s got %s\n", a, b);
-        return 0;
-    }
-    return 1;
-}
 
 static void test_die() {
     exitcode = -1;
@@ -25,54 +15,52 @@ static void test_die() {
 
 static void test_remove_markup() {
     exitcode = -1;
-    char string[BUFSIZE];
 
-    strncpy(string, "", BUFSIZE - 1);
-    remove_markup(string);
-    assert(compare_string("", string));
+    char str1[] = "";
+    remove_markup(str1);
+    assert(!strcmp(str1, ""));
    
-    strncpy(string, "no markup", BUFSIZE - 1);
-    remove_markup(string);
-    assert(compare_string("no markup", string));
+    char str2[] = "no markup";
+    remove_markup(str2);
+    assert(!strcmp("no markup", str2));
 
-    strncpy(string, "normal <b>bold<\\b> normal", BUFSIZE - 1);
-    remove_markup(string);
-    assert(compare_string("normal bold normal", string));
+    char str3[] = "normal <b>bold<\\b> normal";
+    remove_markup(str3);
+    assert(!strcmp("normal bold normal", str3));
 
-    strncpy(string, "<img src='foo'>bar</img>", BUFSIZE - 1);
-    remove_markup(string);
-    assert(compare_string("bar", string));
+    char str4[] = "<img src='foo'>bar</img>";
+    remove_markup(str4);
+    assert(!strcmp("bar", str4));
 
-    strncpy(string, "a>b<c", BUFSIZE - 1);
-    remove_markup(string);
-    assert(compare_string("a>b<c", string));
+    char str5[] = "a>b<c";
+    remove_markup(str5);
+    assert(!strcmp("a>b<c", str5));
 
-    strncpy(string, "<<a>><<b>", BUFSIZE - 1);
-    remove_markup(string);
-    assert(compare_string(">", string));
+    char str6[] = "<<a>><<b>";
+    remove_markup(str6);
+    assert(!strcmp(">", str6));
 
-    strncpy(string, "<\n><\n>\n<\n>", BUFSIZE - 1);
-    remove_markup(string);
-    assert(compare_string("\n", string));
+    char str7[] = "<\n><\n>\n<\n>";
+    remove_markup(str7);
+    assert(!strcmp("\n", str7));
 
     assert(exitcode == -1);
 }
 
 static void test_remove_special() {
     exitcode = -1;
-    char string[BUFSIZE];
 
-    strncpy(string, "", BUFSIZE - 1);
-    remove_special(string);
-    assert(!strcmp(string, ""));
+    char str1[] = "";
+    remove_special(str1);
+    assert(!strcmp(str1, ""));
 
-    strncpy(string, "foo\nbar\r", BUFSIZE - 1);
-    remove_special(string);
-    assert(!strcmp(string, "foo bar "));
+    char str2[] = "foo\nbar\r";
+    remove_special(str2);
+    assert(!strcmp(str2, "foo bar "));
     
-    strncpy(string, "\n\r\0\b", BUFSIZE - 1);
-    remove_special(string);
-    assert(!strcmp(string, "  "));
+    char str3[] = "\n\r\0\b";
+    remove_special(str3);
+    assert(!strcmp(str3, "  "));
 
     assert(exitcode == -1);
 }
