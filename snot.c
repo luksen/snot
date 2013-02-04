@@ -451,6 +451,7 @@ static void bus_signal_notification_closed(DBusConnection* conn, int id, int rea
  * main
  *******************************************************************************
  */
+#ifndef TESTING
 int main(int args, char **argv) {
     // setup config
     config_init();
@@ -539,3 +540,4 @@ int main(int args, char **argv) {
     }
     free(bus_handler_vt);
 }
+#endif

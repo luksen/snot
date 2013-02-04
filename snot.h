@@ -25,6 +25,10 @@
 #include <dbus/dbus.h>
 #include <errno.h>
 
+#ifdef TESTING
+#define exit(x) { exitcode = x; return; }
+#endif
+
 
 /*
  * config defaults
