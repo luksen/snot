@@ -116,6 +116,8 @@ static void config_parse_cmd(int argc, char **argv) {
                 i++;
                 if (!sscanf(argv[i], "%d", &config.timeout))
                     die("Timeout must be given in milliseconds");
+                if (config.timeout < 0)
+                    die("Timeout can't be negative");
             }
             else if ((argv[i][1] == 'f') || (!strcmp(argv[i], "--format"))) {
                 if (i == argc - 1)
