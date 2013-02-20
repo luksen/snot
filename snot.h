@@ -24,6 +24,8 @@
 #include <sys/time.h>
 #include <dbus/dbus.h>
 #include <errno.h>
+#include <setjmp.h>
+#include <signal.h>
 
 #ifdef TESTING
 #define exit(x) { exitcode = x; return; }

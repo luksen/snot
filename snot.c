@@ -28,6 +28,7 @@ const char *snot_spec_version = "1.2";
 #define N_CAPS 1
 const char *snot_capabilities[N_CAPS] = { "body" };
 
+jmp_buf jmpbuf;
 
 static struct config config;
 
@@ -448,6 +449,10 @@ static void bus_signal_notification_closed(DBusConnection* conn, int id, int rea
 }
 
 
+void on_sigint(int sig) {
+	longjmp(jmpbuf, 1);
+}
+
 /*
  *******************************************************************************
  * main
@@ -502,7 +507,17 @@ int main(int args, char **argv) {
     gettimeofday(&last_print, NULL);
     struct timeval now;
     gettimeofday(&now, NULL);
-    while (dbus_connection_read_write_dispatch(conn, block)) {
+	
+	// setup signal handler
+	struct sigaction act = {
+		.sa_handler = on_sigint
+	};
+	if (sigemptyset(&act.sa_mask))
+		die("Failed to set up signal handler");
+	if (setjmp(jmpbuf) || sigaction(SIGTERM, &act, NULL) ||
+			(sigaction(SIGINT, &act, NULL)))
+		die("Failed to set up signal handler");
+    while (!setjmp(jmpbuf) && dbus_connection_read_write_dispatch(conn, block)) {
         if (!nots) continue;
         if (config.single) {
             fifo_print_top(nots, config.format);
@@ -540,6 +555,8 @@ int main(int args, char **argv) {
             gettimeofday(&last_print, NULL);
         }
     }
+	dbus_error_free(&err); 
     free(bus_handler_vt);
+	dbus_connection_unref(conn);
 }
 #endif
