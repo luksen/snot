@@ -106,6 +106,7 @@ static void config_init() {
 	strcpy(config.format, DEF_FORMAT);
 	config.single = DEF_SINGLE;
 	config.raw = DEF_RAW;
+	config.delay = DEF_DELAY;
 }
 
 static void config_parse_cmd(int argc, char **argv) {
@@ -140,6 +141,15 @@ static void config_parse_cmd(int argc, char **argv) {
 			}
 			else if ((argv[i][1] == 'v') || (!strcmp(argv[i], "--version"))) {
 				print_version();
+			}
+			else if ((argv[i][1] == 'd') || (!strcmp(argv[i], "--delay"))) {
+				if (i == argc - 1)
+					die("Missing argument: %s", argv[i]);
+				i++;
+				if (!sscanf(argv[i], "%d", &config.delay))
+					die("Delay must be given in milliseconds");
+				if (config.delay < 0)
+					die("Delay can't be negative");
 			}
 			else if ((argv[i][1] != '-') && (argv[i][2] != '\0')) {
 				die("Short options may not be concatenated: %s", argv[i]);
@@ -504,7 +514,6 @@ int main(int args, char **argv) {
 	struct timeval expire;
 	gettimeofday(&expire, NULL);
 	struct timeval last_print;
-	gettimeofday(&last_print, NULL);
 	struct timeval now;
 	gettimeofday(&now, NULL);
 	
@@ -518,7 +527,9 @@ int main(int args, char **argv) {
 			(sigaction(SIGINT, &act, NULL)))
 		die("Failed to set up signal handler");
 	while (!setjmp(jmpbuf) && dbus_connection_read_write_dispatch(conn, block)) {
+		// no new notification
 		if (!nots) continue;
+		// in single mode no calculations required
 		if (config.single) {
 			fifo_print_top(nots, config.format);
 			fifo_cut(&nots);
@@ -545,7 +556,8 @@ int main(int args, char **argv) {
 				block = -1;
 				printf("\n");
 				fflush(stdout);
-				gettimeofday(&last_print, NULL);
+				last_print.tv_sec = 0;
+				last_print.tv_usec = 0;
 			}
 		}
 		// make sure the number of lines printed equals the timeout in seconds

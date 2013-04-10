@@ -16,6 +16,8 @@ implementation.
 
 `-v or --version` Print version information and exit.
 
+`-d or --delay` Specify delay between printing lines.
+
 ## Format
 
 Snot allows you to define the output string on the command line. The following

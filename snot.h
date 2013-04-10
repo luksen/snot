@@ -39,6 +39,7 @@
 #define DEF_FORMAT "[%a] %s%(b: %b) %(q+%q)"
 #define DEF_SINGLE 0
 #define DEF_RAW 0
+#define DEF_DELAY 1000
 
 
 /*
@@ -49,6 +50,7 @@ struct config {
 	char *format;
 	int single;
 	int raw;
+	int delay;
 };
 
 /*
