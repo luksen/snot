@@ -27,10 +27,6 @@
 #include <setjmp.h>
 #include <signal.h>
 
-#ifdef TESTING
-#define exit(x) { exitcode = x; return; }
-#endif
-
 
 /*
  * config defaults

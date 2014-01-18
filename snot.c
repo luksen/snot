@@ -468,7 +468,6 @@ void on_sigint(int sig) {
  * main
  *******************************************************************************
  */
-#ifndef TESTING
 int main(int args, char **argv) {
 	// setup config
 	config_init();
@@ -571,4 +570,3 @@ int main(int args, char **argv) {
 	free(bus_handler_vt);
 	dbus_connection_unref(conn);
 }
-#endif
