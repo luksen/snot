@@ -79,7 +79,7 @@ static void remove_special(char *string);
 static int next_id();
 
 /*
- * struct timeval covinience functions
+ * struct timeval convenience functions
  */
 static void timeval_add_msecs(struct timeval *tp, int msecs);
 static int timeval_geq(struct timeval this, struct timeval other);
