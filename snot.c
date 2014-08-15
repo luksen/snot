@@ -515,6 +515,7 @@ int main(int args, char **argv) {
 	struct timeval last_print;
 	struct timeval now;
 	gettimeofday(&now, NULL);
+	gettimeofday(&last_print, NULL);
 	
 	// setup signal handler
 	struct sigaction act = {
@@ -537,7 +538,7 @@ int main(int args, char **argv) {
 		gettimeofday(&now, NULL);
 		if (block == -1) {
 			// queue was empty
-			block = 1000;
+			block = config.delay;
 			gettimeofday(&expire, NULL);
 			timeval_add_msecs(&expire, nots->timeout);
 		}
@@ -546,7 +547,7 @@ int main(int args, char **argv) {
 			int id = fifo_cut(&nots);
 			bus_signal_notification_closed(conn, id, 1);
 			if (nots) {
-				block = 1000;
+				block = config.delay;
 				gettimeofday(&expire, NULL);
 				timeval_add_msecs(&expire, nots->timeout);
 			}
@@ -555,8 +556,7 @@ int main(int args, char **argv) {
 				block = -1;
 				printf("\n");
 				fflush(stdout);
-				last_print.tv_sec = 0;
-				last_print.tv_usec = 0;
+				gettimeofday(&last_print, NULL);
 			}
 		}
 		// make sure the number of lines printed equals the timeout in seconds
