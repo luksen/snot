@@ -4,7 +4,7 @@ CC = gcc
 CFLAGS = -std=c99 -pedantic -Wall -Werror -D_XOPEN_SOURCE=600 -g
 DBUS = $(shell pkg-config --cflags --libs dbus-1)
 
-.PHONY: all clean install uninstall
+.PHONY: all clean install uninstall test
 
 all: snot
 
@@ -19,3 +19,6 @@ install: snot
 
 uninstall:
 	-rm ${PREFIX}/snot
+
+test:
+	cram -v tests/*.t
