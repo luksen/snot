@@ -1,10 +1,10 @@
-# All cram tests should use this. Make sure that "ag" runs the version
-# of ag we just built, and make the output really simple.
+# All cram tests should use this.
 
 alias snot="$TESTDIR/../snot"
 
 run() {
-	snot $@ & sleep 1
+	snot $@ &
+	sleep 1
 }
 
 send() {
@@ -12,7 +12,8 @@ send() {
 }
 
 fin() {
-	killall -TERM snot
+	kill -TERM $! 2>/dev/null
+	wait $!
 }
 
 singleshot() {
