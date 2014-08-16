@@ -55,6 +55,8 @@ Specifying 0 as id will close the head of the queue. This is an extension to the
 specification. This is useful for non-expiring notifications or notifications
 with a long timeout.
 
+# Development
+
 ## Todo
 
  - honor replaces\_id
@@ -74,3 +76,11 @@ with a long timeout.
     "icon-static"       no          no
     "persistence"       maybe       no
     "sound"             maybe       no          (through external program call)
+
+## Test suite
+
+Snot uses Cram for testing. It's a bit awkward because of its asynchronous
+nature, but it works. `tests/setup.sh` contains some utility functions to make
+it easier and should be used in all tests.
+
+Run `make test` to run all tests.
