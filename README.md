@@ -1,4 +1,4 @@
-# snot - simple notification
+# snot - simple notifications
 
 Text based notification server for libnotify directly based on libdbus. 
 
@@ -7,8 +7,9 @@ implementation.
 
 ## Options
 
-`-t or --timeout` Overwrite the standard timeout for notifications without 
-    specified timeout
+`-h or --help` Print usage information.
+
+`-t or --timeout` Change default notification timeout.
 
 `-f or --format` Define the output format as described in the next paragraph.
 
@@ -17,6 +18,8 @@ implementation.
 `-v or --version` Print version information and exit.
 
 `-d or --delay` Specify delay between printing lines.
+
+`-1 or --single` Print exactly one line for each notification.
 
 ## Format
 
@@ -54,7 +57,7 @@ with a long timeout.
 
 ## Todo
 
- - honor replaces\_ip
+ - honor replaces\_id
  - handle urgency levels
 
 
