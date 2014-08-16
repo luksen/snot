@@ -58,6 +58,28 @@ static void print_version() {
 	exit(EXIT_SUCCESS);
 }
 
+static void print_usage() {
+	printf("--timeout TIME     -t      Change default timeout.\n");
+	printf("--delay TIME       -d      Specify time between printings.\n");
+	printf("--format FORMAT    -f      Define output format.\n");
+	printf("--raw              -r      Don't remove markup.\n");
+	printf("--single           -1      Print exactly one line for each notification.\n");
+	printf("--version          -v      Print version information.\n");
+	printf("--help             -h      Print this help.\n");
+	printf("\n");
+	printf("TIME:\n");
+	printf("A time interval in milliseconds.\n");
+	printf("\n");
+	printf("FORMAT:\n");
+	printf("These substitions are supported:\n");
+	printf("  %%a       application name\n");
+	printf("  %%s       notification summary\n");
+	printf("  %%b       notification body\n");
+	printf("  %%q       size of queue\n");
+	printf("  %%(x...)  only display ... if x exists; x may be one of the above\n");
+	exit(EXIT_SUCCESS);
+}
+
 static void remove_markup(char *string) {
 	int lshift = 0;
 	for (int i = 0; i < strlen(string); i++) {
@@ -150,6 +172,9 @@ static void config_parse_cmd(int argc, char **argv) {
 					die("Delay must be given in milliseconds");
 				if (config.delay < 0)
 					die("Delay can't be negative");
+			}
+			else if ((argv[i][1] == 'h') || (!strcmp(argv[i], "--help"))) {
+				print_usage();
 			}
 			else if ((argv[i][1] != '-') && (argv[i][2] != '\0')) {
 				die("Short options may not be concatenated: %s", argv[i]);

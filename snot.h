@@ -119,3 +119,4 @@ static void bus_signal_notification_closed(DBusConnection* conn, int id,
  * others
  */
 static void print_version();
+static void print_usage();
