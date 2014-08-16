@@ -20,5 +20,5 @@ install: snot
 uninstall:
 	-rm ${PREFIX}/snot
 
-test:
+test: snot
 	cram -v tests/*.t
