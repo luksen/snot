@@ -9,7 +9,7 @@ Oneline:
 
 No parameters:
 
-  $ run; send foo bar; sleep 3; fin
+  $ run; send foo bar; sleep 4; fin
   [cram] foo: bar 
   [cram] foo: bar 
   [cram] foo: bar 

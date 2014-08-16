@@ -543,7 +543,9 @@ int main(int args, char **argv) {
 	struct timeval last_print;
 	struct timeval now;
 	gettimeofday(&now, NULL);
-	gettimeofday(&last_print, NULL);
+	last_print.tv_sec = 0;
+	last_print.tv_usec = 0;
+	int printed = 0;
 	
 	// setup signal handler
 	struct sigaction act = {
@@ -567,31 +569,36 @@ int main(int args, char **argv) {
 		if (block == -1) {
 			// queue was empty
 			block = config.delay;
-			gettimeofday(&expire, NULL);
-			timeval_add_msecs(&expire, nots->timeout);
 		}
-		else if (timeval_geq(now, expire) && nots->timeout > -1) {
+		else if (printed && timeval_geq(now, expire)
+				&& nots->timeout > -1
+				&& (config.delay == 0
+					|| printed >= nots->timeout/config.delay)) {
 			// notification expired
 			int id = fifo_cut(&nots);
 			bus_signal_notification_closed(conn, id, 1);
-			if (nots) {
-				block = config.delay;
-				gettimeofday(&expire, NULL);
-				timeval_add_msecs(&expire, nots->timeout);
-			}
-			else {
+			printed = 0;
+			block = config.delay;
+			if (!nots) {
 				// no new notification
 				block = -1;
 				printf("\n");
 				fflush(stdout);
 				gettimeofday(&last_print, NULL);
+				continue;
 			}
 		}
-		// make sure the number of lines printed equals the timeout in seconds
-		now.tv_sec--;
+		// Allow printing 200msec early
+		timeval_add_msecs(&now, -config.delay);
+		timeval_add_msecs(&now, 200);
 		if (timeval_geq(now, last_print)) {
 			fifo_print_top(nots, config.format);
 			gettimeofday(&last_print, NULL);
+			if (!printed) {
+				gettimeofday(&expire, NULL);
+				timeval_add_msecs(&expire, nots->timeout);
+			}
+			printed++;
 		}
 	}
 	dbus_error_free(&err); 
