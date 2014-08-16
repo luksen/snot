@@ -2,3 +2,21 @@
 # of ag we just built, and make the output really simple.
 
 alias snot="$TESTDIR/../snot"
+
+run() {
+	snot $@ & sleep 1
+}
+
+send() {
+	notify-send -a cram $@
+}
+
+fin() {
+	killall -TERM snot
+}
+
+singleshot() {
+	run -1
+	send $@
+	fin
+}
