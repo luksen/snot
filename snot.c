@@ -72,6 +72,7 @@ static void print_usage() {
 	printf("\n");
 	printf("FORMAT:\n");
 	printf("These substitions are supported:\n");
+	printf("  %%%%       %%\n");
 	printf("  %%a       application name\n");
 	printf("  %%s       notification summary\n");
 	printf("  %%b       notification body\n");
@@ -315,8 +316,10 @@ static void fifo_print_top(struct fifo *fifo, const char *fmt) {
 					case '(':
 						cond = fmt[++i];
 						break;
+					case '%':
+						putchar('%');
+						break;
 					default:
-						putchar(c);
 						continue;
 
 				}
