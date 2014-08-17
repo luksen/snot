@@ -3,7 +3,7 @@
 alias snot="$TESTDIR/../snot"
 
 run() {
-	snot $@ &
+	snot "$@" &
 	sleep 1
 }
 
