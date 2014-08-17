@@ -22,7 +22,7 @@
 // server information
 const char *snot_name = "Snot";
 const char *snot_vendor = "luksen";
-const char *snot_version = "0.03";
+const char *snot_version = "0.04";
 const char *snot_spec_version = "1.2";
 // server capabilities
 #define N_CAPS 1
