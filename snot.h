@@ -36,6 +36,7 @@
 #define DEF_SINGLE 0
 #define DEF_RAW 0
 #define DEF_DELAY 1000
+#define DEF_NEWLINE 0
 
 
 /*
@@ -47,6 +48,7 @@ struct config {
 	int single;
 	int raw;
 	int delay;
+	int newline;
 };
 
 /*

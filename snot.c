@@ -130,6 +130,7 @@ static void config_init() {
 	config.single = DEF_SINGLE;
 	config.raw = DEF_RAW;
 	config.delay = DEF_DELAY;
+	config.newline = DEF_NEWLINE;
 }
 
 static void config_parse_cmd(int argc, char **argv) {
@@ -176,6 +177,9 @@ static void config_parse_cmd(int argc, char **argv) {
 			}
 			else if ((argv[i][1] == 'h') || (!strcmp(argv[i], "--help"))) {
 				print_usage();
+			}
+			else if ((argv[i][1] == 'n') || (!strcmp(argv[i], "--newline"))) {
+				config.newline = 1;
 			}
 			else if ((argv[i][1] != '-') && (argv[i][2] != '\0')) {
 				die("Short options may not be concatenated: %s", argv[i]);
@@ -582,9 +586,11 @@ int main(int args, char **argv) {
 			if (!nots) {
 				// no new notification
 				block = -1;
-				printf("\n");
-				fflush(stdout);
-				gettimeofday(&last_print, NULL);
+				if (config.newline) {
+					printf("\n");
+					fflush(stdout);
+					gettimeofday(&last_print, NULL);
+				}
 				continue;
 			}
 		}

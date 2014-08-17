@@ -13,4 +13,3 @@ No parameters:
   [cram] foo: bar 
   [cram] foo: bar 
   [cram] foo: bar 
-  
